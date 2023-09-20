@@ -1,0 +1,134 @@
+<!--
+
+ Copyright 2023, Institute for Systems Biology
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+-->
+
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+    {% block head %}
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>ISB-CGC BigQuery Table Search</title>
+    <meta name="description"
+          content="Browse BigQuery tables of metadata and molecular cancer data from the Genomic Data Commons and other sources. Jump directly to a table to perform discovery and computation via SQL">
+
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}"/>
+    <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/prism.css') }}"/>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/libs/prism.js') }}"></script>
+    <!--jquery 3.5.1-->
+    <script type="text/javascript" src="{{ url_for('static', filename='js/libs/jquery-3.5.1.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/libs/datatables.min.js') }}"></script>
+    <!--fontawesome 5.15.2-->
+    <script type="text/javascript" src="{{ url_for('static', filename='js/libs/c53771aefd.js') }}"></script>
+    <!--chosen js-->
+    <script type="text/javascript" src="{{ url_for('static', filename='js/libs/chosen.jquery.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/base.js') }}"></script>
+
+
+    {% endblock %}
+</head>
+<header class="navbar bq-bg-dark p-0 shadow flex-md-nowrap fixed-top">
+    <a href="/" class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 text-white d-flex align-items-center">
+        <img class="me-2" src="{{ url_for('static', filename='img/isb-cgc-primary-reverse.png') }}" width="25px"
+             alt="ISB-CGC logo">
+        <span class="fs-5">BigQuery Table Search</span>
+    </a>
+    <ul class="nav col-md-4 justify-content-end pe-3">
+        <li class="nav-item">
+            <a target="_blank" rel="noreferrer" href="https://isb-cgc.org/" class="nav-link px-2">ISB-CGC</a>
+        </li>
+        <div class="dropdown">
+            <a type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
+               data-bs-offset="10,20">
+                <!--            <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-offset="10,20">-->
+                Resources
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item"
+                       href="https://isb-cancer-genomics-cloud.readthedocs.io/en/latest/sections/BigQuery.html"
+                       target="_blank" rel="noreferrer">ISB-CGC BigQuery Documentation</a></li>
+                <li><a class="dropdown-item"
+                       href="https://isb-cancer-genomics-cloud.readthedocs.io/en/latest/sections/progapi/bigqueryGUI/LinkingBigQueryToIsb-cgcProject.html"
+                       target="_blank" rel="noreferrer">ISB-CGC BigQuery Access Info</a></li>
+                <li><a class="dropdown-item" href="https://console.cloud.google.com/bigquery" target="_blank"
+                       rel="noreferrer">Google BigQuery Console</a></li>
+                <li><a class="dropdown-item" href="https://cloud.google.com/bigquery/what-is-bigquery" target="_blank"
+                       rel="noreferrer">What is BigQuery?</a></li>
+            </ul>
+        </div>
+        <li class="nav-item"><a href="#" class="nav-link px-2">FAQs</a></li>
+        <li class="nav-item"><a href="#" class="nav-link px-2">About</a></li>
+    </ul>
+
+    <ul class="navbar-nav flex-row d-md-none">
+        <li class="nav-item text-nowrap">
+            <button class="nav-link px-3 text-white" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSearch" aria-controls="navbarSearch" aria-expanded="false"
+                    aria-label="Toggle search">
+                <svg class="bi">
+                    <use xlink:href="#search"></use>
+                </svg>
+            </button>
+        </li>
+        <li class="nav-item text-nowrap">
+            <button class="nav-link px-3 text-white" type="button" data-bs-toggle="offcanvas"
+                    data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <svg class="bi">
+                    <use xlink:href="#list"></use>
+                </svg>
+            </button>
+        </li>
+    </ul>
+
+    <!--    <div id="navbarSearch" class="navbar-search w-100 collapse">-->
+    <!--        <input class="form-control w-100 rounded-0 border-0" type="text" placeholder="Search" aria-label="Search">-->
+    <!--    </div>-->
+    <!--</div>-->
+</header>
+<body id="body">
+
+<main id="{% block page_name %}content{% endblock %}" class="main-content">
+    {% block content %}
+    {% endblock %}
+</main>
+</body>
+<footer class="py-2 text-center bq-bg-dark">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-2 text-start">©2023, ISB</div>
+            <div class="col-lg-8">
+                <div class="mb-3">
+                    <a href="/privacy/" target="_blank" rel="noreferrer" class="sr-set">
+                        Privacy Policy<span class="sr-only"> opens a new tab</span></a>
+                    |
+                    <a href="https://www.hhs.gov/vulnerability-disclosure-policy/index.html" target="_blank"
+                       rel="noopener noreferrer" class="sr-set">HHS Vulnerability Disclosure<span class="sr-only"> opens a new tab</span></a>
+                </div>
+                <div>
+                    <a href="#">Back to top</a>
+                </div>
+            </div>
+
+            <div class="col-lg-2"></div>
+        </div>
+    </div>
+</footer>
+
+
+</html>
