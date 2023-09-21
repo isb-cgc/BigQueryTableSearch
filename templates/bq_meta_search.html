@@ -2,10 +2,8 @@
 {% block head %}
 {{ super() }}
 <script>
-    // let selected_table_full_id = '{{ selected_table_full_id|safe }}';
     let selected_filters = '{{ bq_filters["selected_filters"]|safe }}';
     let selected_table_full_id = '{{ bq_filters["selected_table_full_id"]|safe }}';
-    console.log(selected_filters);
 </script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/bq_meta_search.js') }}"></script>
 
@@ -68,7 +66,7 @@
                         </div>
                         <div>
                             <label class="form-label">Reference Genome</label>
-                            <select class="form-select bq-select" data-column-name="referenceGenome">
+                            <select class="form-select bq-select" data-column-name="reference_genome">
                                 {% for option in bq_filters.reference_genome.options %}
                                 <option value="{{ option.value }}">{{ option.label }}</option>
                                 {% endfor %}
@@ -88,7 +86,7 @@
                             <label class="form-label">Data Type</label>
                             <select multiple data-placeholder="Choose Data Types..."
                                     class="autocomplete_select_box form-select bq-select"
-                                    data-column-name="dataType">
+                                    data-column-name="data_type">
                                 {% for option in bq_filters.data_type.options %}
                                 <option value="{{ option.value }}">{{ option.label }}</option>
                                 {% endfor %}
@@ -98,7 +96,7 @@
                             <label class="form-label">Experimental Strategy</label>
                             <select multiple data-placeholder="Choose Experimental Strategy..."
                                     class="autocomplete_select_box form-select bq-select"
-                                    data-column-name="expStrat">
+                                    data-column-name="experimental_strategy">
                                 {% for option in bq_filters.experimental_strategy.options %}
                                 <option value="{{ option.value }}">{{ option.label }}</option>
                                 {% endfor %}
@@ -114,7 +112,7 @@
                                     {% if option.value == '' %}
                                     <option value="{{ option.value }}" selected>{{ option.label }}</option>
                                     {% else %}
-                                    <option value="^{{ option.value }}$">{{ option.label }}</option>
+                                    <option value="{{ option.value }}">{{ option.label }}</option>
                                     {% endif %}
                                     {% endfor %}
                                 </select>
@@ -139,7 +137,7 @@
                             </div>
                             <div>
                                 <label class="form-label">Field Name</label>
-                                <input type="text" class="form-control bq-filter" data-column-name="fields">
+                                <input type="text" class="form-control bq-filter" data-column-name="field_name">
                             </div>
                         </div>
                         <br>

@@ -62,29 +62,6 @@ $(document).ready(function () {
                 },
                 'className': 'label-filter colvis-toggle'
             },
-            // {
-            //     'name': 'dataAccess',
-            //     'data': function (data) {
-            //         return filtered_label_data(data.labels, 'access');
-            //         // return (data.labels && data.labels.access) ? data.labels.access: null;
-            //     },
-            //     'render': function(data, type){
-            //         if (type === 'display') {
-            //             if (data != null && data.toLowerCase() === 'controlled') {
-            //                 return '<i class="fa fa-lock" aria-hidden="true" title="Controlled Access"></i>';
-            //             }
-            //             else {
-            //                 return '';
-            //             }
-            //         }
-            //         else {
-            //             return data;
-            //         }
-            //     },
-            //     'className': 'label-filter text-center',
-            //     'orderable': false
-            //
-            // },
             {
                 'name': 'projectId',
                 'data': 'tableReference.projectId',
@@ -137,7 +114,7 @@ $(document).ready(function () {
                 'className': 'label-filter colvis-toggle'
             },
             {
-                'name': 'referenceGenome',
+                'name': 'reference_genome',
                 'data': function (data) {
                     return filtered_label_data(data.labels, 'reference_genome');
 
@@ -155,7 +132,7 @@ $(document).ready(function () {
                 'className': 'label-filter colvis-toggle'
             },
             {
-                'name': 'dataType',
+                'name': 'data_type',
                 'data': function (data) {
                     return filtered_label_data(data.labels, 'data_type');
                 },
@@ -165,7 +142,7 @@ $(document).ready(function () {
                 'className': 'label-filter colvis-toggle'
             },
             {
-                'name': 'expStrat',
+                'name': 'experimental_strategy',
                 'data': function (data) {
                     return filtered_label_data(data.labels, 'experimental_strategy');
                 },
@@ -184,18 +161,13 @@ $(document).ready(function () {
                     return format_label_display(data, type);
                 },
                 'className': 'label-filter colvis-toggle'
-
             },
             {
                 'name': 'numRows',
                 'data': function (data) {
-                    // if (data.type.toLowerCase() === 'view'){
-                    //     return 'N/A';
-                    // }
-                    // else
                     return data.numRows;
                 },
-                'className': 'text-right colvis-toggle',
+                'className': 'text-end colvis-toggle',
                 'render': function (data, type) {
                     if (type === 'display') {
                         return $.fn.dataTable.render.number(',', '.').display(data);
@@ -206,7 +178,7 @@ $(document).ready(function () {
             {
                 'name': 'createdDate',
                 'data': 'creationTime',
-                'className': 'text-right colvis-toggle',
+                'className': 'text-end colvis-toggle',
                 'render': function (data, type) {
                     if (type === 'display') {
                         let date = new Date(parseInt(data));
@@ -293,10 +265,9 @@ $(document).ready(function () {
                 'visible': false
             },
             {
-                'name': 'fields',
+                'name': 'field_name',
                 'data': function (row) {
                     return format_schema_field_names(row.schema.fields ? row.schema.fields : [], false);
-                    // return format_schema_field_names(row.schema.fields ? row.schema.fields : [], false);
                 },
                 'visible': false
             },
@@ -311,7 +282,7 @@ $(document).ready(function () {
                     return type === 'display' ?
                         '<a class="open-gcp-btn" data-gcpurl="'
                         + data
-                        + '" title="Open in Google Cloud Platform Console"><svg fill="none" fill-rule="evenodd" height="15" viewBox="0 0 32 32" width="15" xmlns="http://www.w3.org/2000/svg" fit="" preserveAspectRatio="xMidYMid meet" focusable="false"><path d="M8.627 14.358v3.69c.58.998 1.4 1.834 2.382 2.435v-6.125H8.62z" fill="#19424e"></path><path d="M13.044 10.972v10.54c.493.073.998.12 1.516.12.473 0 .934-.042 1.386-.104V10.972h-2.902z" fill="#3A79B8"></path><path d="M18.294 15.81v4.604a6.954 6.954 0 0 0 2.384-2.556v-2.05h-2.384zm5.74 6.233l-1.99 1.992a.592.592 0 0 0 0 .836L27 29.83c.23.23.606.23.836 0l1.992-1.99a.594.594 0 0 0 0-.837l-4.957-4.956a.593.593 0 0 0-.83 0" fill="#3A79B8"></path><path d="M14.615 2C7.648 2 2 7.648 2 14.615 2 21.582 7.648 27.23 14.615 27.23c6.966 0 12.614-5.648 12.614-12.615C27.23 7.648 21.58 2 14.61 2m0 21.96a9.346 9.346 0 0 1-9.346-9.345 9.347 9.347 0 1 1 9.346 9.346" fill="#3A79B8"></path></svg></a>'
+                        + '" title="Open in Google Cloud Console"><svg fill="none" fill-rule="evenodd" height="15" viewBox="0 0 32 32" width="15" xmlns="http://www.w3.org/2000/svg" fit="" preserveAspectRatio="xMidYMid meet" focusable="false"><path d="M8.627 14.358v3.69c.58.998 1.4 1.834 2.382 2.435v-6.125H8.62z" fill="#19424e"></path><path d="M13.044 10.972v10.54c.493.073.998.12 1.516.12.473 0 .934-.042 1.386-.104V10.972h-2.902z" fill="#3A79B8"></path><path d="M18.294 15.81v4.604a6.954 6.954 0 0 0 2.384-2.556v-2.05h-2.384zm5.74 6.233l-1.99 1.992a.592.592 0 0 0 0 .836L27 29.83c.23.23.606.23.836 0l1.992-1.99a.594.594 0 0 0 0-.837l-4.957-4.956a.593.593 0 0 0-.83 0" fill="#3A79B8"></path><path d="M14.615 2C7.648 2 2 7.648 2 14.615 2 21.582 7.648 27.23 14.615 27.23c6.966 0 12.614-5.648 12.614-12.615C27.23 7.648 21.58 2 14.61 2m0 21.96a9.346 9.346 0 0 1-9.346-9.345 9.347 9.347 0 1 1 9.346 9.346" fill="#3A79B8"></path></svg></a>'
                         : data;
 
                 },
@@ -325,7 +296,6 @@ $(document).ready(function () {
             $('.spinner').remove();
             if (selected_table_full_id !== "") {
                 let parts = selected_table_full_id.split('.');
-                ;
                 if (parts[0]) {
                     let project_id = parts[0];
                     $('#search-by-project-id option').each(function () {
@@ -333,19 +303,20 @@ $(document).ready(function () {
                             $(this).prop('selected', true);
                         }
                     });
-                    columnSearch('projectId', project_id);
+                    // columnSearch('projectId', project_id);
                 }
                 if (parts[1]) {
                     let dataset_id = parts[1];
                     dataset_id = "\"" + parts[1] + "\"";
                     $('#search-by-dataset-id')[0].value = dataset_id;
-                    columnSearch('datasetId', dataset_id);
+                    // columnSearch('datasetId', dataset_id);
                 }
                 if (parts[2]) {
                     let table_id = "\"" + parts[2] + "\"";
                     $('#search-by-table-id')[0].value = table_id;
-                    columnSearch('tableId', table_id);
+                    // columnSearch('tableId', table_id);
                 }
+                updateTable();
                 // $('#show-btn').click();
             }
 
@@ -354,35 +325,42 @@ $(document).ready(function () {
         drawCallback: function (settings) {
             reset_table_style(settings);
             set_gcp_open_btn($('#bqmeta'));
-        }
+        },
+        // language: {
+        //     "infoFiltered": ""
+        // }
+
     });
 
     $('.bq-filter').on('keyup', function () {
-        let column_name = $(this).attr('data-column-name');
-        columnSearch(column_name, this.value);
+        // let column_name = $(this).attr('data-column-name');
+        updateTable();
+        // columnSearch(column_name, this.value);
     });
 
     $('.bq-checkbox').on('change', function () {
-        let column_name = $(this).attr('data-column-name');
-        let checkbox_vals = '';
-        $('input[data-column-name=' + column_name + ']:checked').each(function (i) {
-            checkbox_vals += (i > 0 ? '|' : '') + $(this).val();
-        });
-        columnSearch(column_name, checkbox_vals, true, false);
+        // let column_name = $(this).attr('data-column-name');
+        // let checkbox_vals = '';
+        // $('input[data-column-name=' + column_name + ']:checked').each(function (i) {
+        //     checkbox_vals += (i > 0 ? '|' : '') + $(this).val();
+        // });
+        updateTable();
+        // columnSearch(column_name, checkbox_vals, true, false);
     });
 
     $('.bq-select').on('change', function () {
-        let column_name = $(this).attr('data-column-name');
-        let term = $(this).val();
-        if ($(this).prop('multiple')) {
-            let regex_term = '';
-            $.each(term, function (index, value) {
-                regex_term += (index > 0 ? '|' : '') + '\\b' + value + '\\b(?!-)';
-            });
-            columnSearch(column_name, regex_term, true, false);
-        } else {
-            columnSearch(column_name, term, term.startsWith('^'), false);
-        }
+        // let column_name = $(this).attr('data-column-name');
+        // let term = $(this).val();
+        // if ($(this).prop('multiple')) {
+        //     let regex_term = '';
+        //     $.each(term, function (index, value) {
+        //         regex_term += (index > 0 ? '|' : '') + '\\b' + value + '\\b(?!-)';
+        //     });
+        //     columnSearch(column_name, regex_term, true, false);
+        // } else {
+        //     columnSearch(column_name, term, term.startsWith('^'), false);
+        // }
+        updateTable();
     });
 
     $(".reset-btn").on('click', function () {
@@ -390,8 +368,9 @@ $(document).ready(function () {
         $('.bq-filter, .bq-select').val('');
         $('#status').val(selected_filters ? '' : 'current');
         $('.bq-checkbox').prop('checked', false);
-        $('.bq-select, .bq-checkbox').trigger('change');
-        $('.bq-filter').trigger('keyup');
+        // $('.bq-select, .bq-checkbox').trigger('change');
+        updateTable();
+        // $('.bq-filter').trigger('keyup');
     });
 
     $('#gcp-open-btn').on('click', function () {
@@ -516,22 +495,88 @@ $(document).ready(function () {
         }
     });
 
-
-    let columnSearch = function (column_name, term, regex_search, smart_search) {
-        let exact_match = term.match(/^\".*\"$/);
-
-        if (exact_match != null && exact_match.length > 0) {
-            regex_search = true;
-            smart_search = false;
-            term = '^' + term.slice(1, term.length - 1) + '$';
+    let updateTable = function () {
+        let filter_arr = [];
+        $('.bq-filter').each(function () {
+            let term = $(this).val();
+            if (term !== '') {
+                let column_name = $(this).attr('data-column-name');
+                filter_arr.push(column_name + '=' + term);
+            }
+        });
+        $('.bq-select').each(function () {
+            let column_name = $(this).attr('data-column-name');
+            let term = $(this).val();
+            if (term.length > 0) {
+                let col_filter;
+                if ($(this).prop('multiple')) {
+                    let regex_term = term.join('|');
+                    col_filter = column_name + '=' + regex_term;
+                } else {
+                    col_filter = column_name + '=' + term;
+                }
+                filter_arr.push(col_filter);
+            }
+        });
+        let checkbox_filters = {};
+        $('input.bq-checkbox:checked').each(function() {
+            let column_name = $(this).attr('data-column-name');
+            let term = $(this).val();
+            if (column_name in checkbox_filters){
+                checkbox_filters[column_name].push(term);
+            } else{
+                checkbox_filters[column_name] = [term];
+            }
+        });
+        for (col in checkbox_filters){
+            filter_arr.push(col + '=' + checkbox_filters[col].join('|'))
         }
-        table
-            .columns(column_name + ':name')
-            .search(term, regex_search, smart_search)
-            .draw();
+
+        let filter_str = filter_arr.join('&');
+
+        let updated_url = "/bq_meta_data" + (filter_str ? '?' + filter_str : '');
+        console.log(updated_url);
+        table.ajax.url(updated_url).load();
+    };
+    let columnSearch = function (column_name, term, regex_search, smart_search) {
+        // let exact_match = term.match(/^\".*\"$/);
+        // if (exact_match != null && exact_match.length > 0) {
+        //     regex_search = true;
+        //     smart_search = false;
+        //     term = '^' + term.slice(1, term.length - 1) + '$';
+        // }
+
+        // console.log('exact_match');
+        // console.log(exact_match);
+        // console.log('regex_search');
+        // console.log(regex_search);
+        // console.log('smart_search');
+        // console.log(smart_search);
+        // console.log('term');
+        // console.log(term);
+        // console.log('column_name');
+        // console.log(column_name);
+        // if (term !== ''){
+        let updated_url = "/bq_meta_data" + (term !== '' ? ('?' + column_name + '=' + term) : '');
+        // console.log(updated_url);
+        table.ajax.url(updated_url).load();
     };
 
-    // Add event listener for opening and closing details
+// let columnSearch = function (column_name, term, regex_search, smart_search) {
+//     let exact_match = term.match(/^\".*\"$/);
+//
+//     if (exact_match != null && exact_match.length > 0) {
+//         regex_search = true;
+//         smart_search = false;
+//         term = '^' + term.slice(1, term.length - 1) + '$';
+//     }
+//     table
+//         .columns(column_name + ':name')
+//         .search(term, regex_search, smart_search)
+//         .draw();
+// };
+
+// Add event listener for opening and closing details
     $('#bqmeta').find('tbody').on('click', 'td.details-control', function () {
         let tr = $(this).closest('tr');
         let row = table.row(tr);
@@ -559,12 +604,13 @@ $(document).ready(function () {
         no_results_text: "Oops, nothing found!",
         width: "100%"
     });
-});
+})
+;
 
 
 let show_tbl_preview = function (row, tr, td, err_mssg) {
     if (err_mssg) {
-        row.child('<div class="float-right"><i class="fa fa-exclamation-triangle" style="margin-right: 5px;"></i>' + err_mssg + '</div>').show();
+        row.child('<div class="text-end"><i class="fa fa-exclamation-triangle" style="margin-right: 5px;"></i>' + err_mssg + '</div>').show();
     } else {
         let tbl_data = td.data('preview-data');
         row.child(format_tbl_preview(tbl_data['schema_fields'], tbl_data['tbl_data'])).show();
@@ -621,7 +667,7 @@ let format_tbl_details = function (d) {
         '<i class="fa fa-clipboard me-1" aria-hidden="true"></i>' +
         'COPY' +
         '</button>' +
-        '<button data-gcpurl="' + format_bq_gcp_console_link(d.tableReference) + '" class="open-gcp-btn" style="margin-left: 0;" title="Open in Google Cloud Platform Console">' +
+        '<button data-gcpurl="' + format_bq_gcp_console_link(d.tableReference) + '" class="open-gcp-btn" style="margin-left: 0;" title="Open in Google Cloud Console">' +
         // '<img height="10" src="/static/img/bq-logo.jpeg">' +
         '<svg id="BIGQUERY_SECTION_cache12" fill="none" fill-rule="evenodd" height="11" viewBox="0 0 32 32" width="11" xmlns="http://www.w3.org/2000/svg" fit="" preserveAspectRatio="xMidYMid meet" focusable="false">' +
         '<path d="M8.627 14.358v3.69c.58.998 1.4 1.834 2.382 2.435v-6.125H8.62z" fill="#19424e"></path>' +
@@ -720,7 +766,7 @@ let format_tbl_preview_body = function (schema_fields, rows) {
             if (schema_fields[c]['type'] === 'RECORD' || schema_fields[c]['mode'] === 'REPEATED') {
                 let nested_fields_len = schema_fields[c]['type'] === 'RECORD' ? schema_fields[c]['fields'].length : 1;
                 for (let n_col = 0; n_col < nested_fields_len; n_col++) {
-                    let n_col_name = (schema_fields[c]['fields'] ? schema_fields[c]['fields'][n_col]['name']: null);
+                    let n_col_name = (schema_fields[c]['fields'] ? schema_fields[c]['fields'][n_col]['name'] : null);
                     if ('fields' in schema_fields[c] && schema_fields[c]['fields'][n_col]['type'] === 'RECORD') {
                         let n_nested_fields_len = schema_fields[c]['fields'][n_col]['fields'].length;
                         for (let nn_col = 0; nn_col < n_nested_fields_len; nn_col++) {
@@ -754,7 +800,7 @@ let nest_table_cell = function (cell, n_col_name, nn_col_name) {
             if (typeof cell[n_row] === 'object') {
                 if (nn_col_name != null) {
                     if (cell[n_row][n_col_name] != null && cell[n_row][n_col_name].length) {
-                        td_str += (cell[n_row][n_col_name][0][nn_col_name] != null ? cell[n_row][n_col_name][0][nn_col_name]: '&nbsp;');
+                        td_str += (cell[n_row][n_col_name][0][nn_col_name] != null ? cell[n_row][n_col_name][0][nn_col_name] : '&nbsp;');
                     } else {
                         td_str += '&nbsp;';
                     }

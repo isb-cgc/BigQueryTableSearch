@@ -63,9 +63,16 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS
 BQ_ECOSYS_BUCKET = os.environ.get('BQ_ECOSYS_BUCKET',
                                   'https://storage.googleapis.com/webapp-static-files-isb-cgc-dev/bq_ecosys/')
 
+
+@app.route("/about/")
+def about():
+    return render_template("about.html")
+
+
 @app.route("/privacy/")
 def privacy():
     return render_template("privacy.html")
+
 
 @app.route("/bq_meta_data/<proj_id>.<dataset_id>.<table_id>/", methods=['GET', 'POST'])
 @app.route("/", methods=['GET', 'POST'])
@@ -74,7 +81,8 @@ def home(proj_id=None, dataset_id=None, table_id=None):
     bq_filter_file_path = BQ_ECOSYS_BUCKET + bq_filter_file_name
     bq_filters = requests.get(bq_filter_file_path).json()
     # bq_filters['selected_table_full_id'] = table_id
-    bq_filters['selected_table_full_id'] = f'{proj_id}.{dataset_id}.{table_id}'
+    if proj_id and dataset_id and table_id:
+        bq_filters['selected_table_full_id'] = f'{proj_id}.{dataset_id}.{table_id}'
     selected_filters_list = []
     if request.method == 'POST':
         rq_meth = request.form
@@ -87,17 +95,14 @@ def home(proj_id=None, dataset_id=None, table_id=None):
     for f in filter_list:
         if rq_meth.get(f):
             selected_filters_list.append('{filter}={value}'.format(filter=f, value=rq_meth.get(f)))
-    print('selected_filters_list')
-    print(selected_filters_list)
     bq_filters['selected_filters'] = '&'.join(selected_filters_list)
     return render_template("bq_meta_search.html", bq_filters=bq_filters)
 
 
-def filter_by_prop(rq_meth, rows, attr_list, sub_category, is_exact_match):
+def filter_by_prop(rq_meth, rows, attr_list, sub_category, exact_match_search):
     for attr in attr_list:
-        f_val = rq_meth.get(attr, '').strip().lower()
-
-        if f_val:
+        f_vals = rq_meth.get(attr, '').strip().lower()
+        if f_vals:
             filtered_rows = []
             for row in rows:
                 add_row = False
@@ -106,46 +111,73 @@ def filter_by_prop(rq_meth, rows, attr_list, sub_category, is_exact_match):
                     if field_dict:
                         if sub_category == 'labels':
                             for k in field_dict.keys():
-                                if k.startswith(attr) and field_dict.get(k).lower() == f_val:
-                                    add_row = True
+                                for f_val in f_vals.split('|'):
+                                    if k.startswith(attr):
+                                        if exact_match_search:
+                                            if field_dict.get(k).lower() == f_val:
+                                                add_row = True
+                                                break
+                                        else:
+                                            if f_val in field_dict.get(k).lower():
+                                                add_row = True
+                                                break
+
+                                if add_row:
                                     break
+
                         else:
-                            if field_dict.get(attr).lower() == f_val:
-                                add_row = True
+                            for f_val in f_vals.split('|'):
+                                if exact_match_search:
+                                    if field_dict.get(attr).lower() == f_val:
+                                        add_row = True
+                                        break
+                                else:
+                                    if f_val in field_dict.get(attr).lower():
+                                        add_row = True
+                                        break
                 else:
-                    if is_exact_match:
-                        if row.get(attr).lower() == f_val:
-                            add_row = True
-                    else:
-                        if row.get(attr) and f_val in row.get(attr).lower():
-                            add_row = True
+                    for f_val in f_vals.split('|'):
+                        if exact_match_search:
+                            add_row = (row.get(attr).lower() == f_val)
+                        else:
+                            add_row = (row.get(attr) and f_val in row.get(attr).lower())
+                        if add_row:
+                            break
                 if add_row:
                     filtered_rows.append(row)
             rows = filtered_rows
     return rows
 
 
+def search_field(field_list, f_val, is_field_found):
+    for field in field_list:
+        is_field_found = (f_val in field['name'].lower())
+        if is_field_found:
+            break
+        elif 'fields' in field:
+            is_field_found = search_field(field['fields'], f_val, is_field_found)
+            if is_field_found:
+                break
+    return is_field_found
+
+
 def filter_by_field_name(rq_meth, rows):
     f_val = rq_meth.get('field_name', '').strip().lower()
-    print(f_val)
     if f_val:
         filtered_rows = []
         for row in rows:
             field_dict = row.get('schema')
             if field_dict:
                 field_list = field_dict.get('fields')
-                for field in field_list:
-                    if field['name'].lower() == f_val:
-                        filtered_rows.append(row)
-                        break
+                is_field_found = search_field(field_list, f_val, False)
+                if is_field_found:
+                    filtered_rows.append(row)
         rows = filtered_rows
     return rows
 
 
 def filter_by_all_labels(rq_meth, rows):
     f_val = rq_meth.get('labels', '').strip().lower()
-    print('f_val')
-    print(f_val)
     if f_val:
         filtered_rows = []
         for row in rows:
@@ -164,14 +196,13 @@ def filter_rows(rows, req):
         rq_meth = req.form
     else:
         rq_meth = req.args
-
     generic_filters = ['description', 'friendlyName']
     tbl_ref_filters = ['projectId', 'datasetId', 'tableId']
     label_filters = ['access', 'status', 'category', 'experimental_strategy', 'data_type', 'source', 'program',
                      'reference_genome']
 
     filter_prop_list = [{'attr_list': generic_filters, 'subcategory': None, 'is_exact_match': False},
-                        {'attr_list': tbl_ref_filters, 'subcategory': 'tableReference', 'is_exact_match': True},
+                        {'attr_list': tbl_ref_filters, 'subcategory': 'tableReference', 'is_exact_match': False},
                         {'attr_list': label_filters, 'subcategory': 'labels', 'is_exact_match': True}]
     for filter_prop in filter_prop_list:
         rows = filter_by_prop(rq_meth, rows, filter_prop['attr_list'], filter_prop['subcategory'],
@@ -210,9 +241,11 @@ def get_nested_data(row_cell):
                 for double_sub_row in sub_row[sub_key]:
                     for double_sub_key in double_sub_row.keys():
                         if nested_cell_data_dict.get(f'{sub_key}.{double_sub_key}'):
-                            nested_cell_data_dict[f'{sub_key}.{double_sub_key}'].append(f'{sub_key}.{double_sub_key}:{double_sub_row[double_sub_key]}')
+                            nested_cell_data_dict[f'{sub_key}.{double_sub_key}'].append(
+                                f'{sub_key}.{double_sub_key}:{double_sub_row[double_sub_key]}')
                         else:
-                            nested_cell_data_dict[f'{sub_key}.{double_sub_key}'] = [f'{sub_key}.{double_sub_key}:{double_sub_row[double_sub_key]}']
+                            nested_cell_data_dict[f'{sub_key}.{double_sub_key}'] = [
+                                f'{sub_key}.{double_sub_key}:{double_sub_row[double_sub_key]}']
                             # nested_cell_data_dict[double_sub_key] = [double_sub_row[double_sub_key]]
                 # print(sub_row[sub_key])
                 # return get_nested_data(sub_row[sub_key])
@@ -238,7 +271,6 @@ def get_schema_fields(schema_field):
         return nested_schema_dic
     else:
         return schema_field.name
-
 
 
 @app.route("/get_tbl_preview/<proj_id>/<dataset_id>/<table_id>/", methods=['GET', 'POST'])
@@ -381,7 +413,6 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
         logger.exception(e)
 
     return jsonify(result)
-
 
 
 # @app.route('/_ah/warmup')
