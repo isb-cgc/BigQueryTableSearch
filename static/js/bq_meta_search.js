@@ -22,9 +22,8 @@ $(document).ready(function () {
         dom: 'lfBrtip',
         ajax: {
             method: 'GET',
-            url: '/bq_meta_data' + query_param_url,
+            url: '/search_api' + query_param_url,
             dataSrc: ''
-
         },
         buttons: [
             {
@@ -295,14 +294,17 @@ $(document).ready(function () {
         serverSide: false,
         processing: true,
         order: [[1, 'asc']],
+        language: {
+            "infoFiltered": ""
+        },
         initComplete: function (settings, json) {
-            window.history.pushState(null,'BigQuery Table Search', query_param_url);
+            window.history.pushState(null, 'BigQuery Table Search', query_param_url);
         },
         drawCallback: function (settings) {
             reset_table_style(settings);
             set_gcp_open_btn($('#bqmeta'));
-            $('#bqmeta_info').append(' (filtered from '+ bq_total_entries +' total entries)')
         }
+
     });
 
     let updateSearch = function () {
@@ -342,52 +344,25 @@ $(document).ready(function () {
             filter_arr.push(col + '=' + checkbox_filters[col].join('|'))
         }
         let filter_str = filter_arr.join('&');
-        let updated_url = "/bq_meta_data" + (filter_str ? '?' + filter_str : '');
+        let updated_url = "/search_api" + (filter_str ? '?' + filter_str : '');
         table.ajax.url(updated_url).load();
-        window.history.pushState(null,'BigQuery Table Search', filter_str ? ('?'+filter_str):'');
+        window.history.pushState(null, 'BigQuery Table Search', filter_str ? ('?' + filter_str) : '');
     };
 
     $('.bq-filter').on('keyup', function () {
-        // let column_name = $(this).attr('data-column-name');
         updateSearch();
-        // columnSearch(column_name, this.value);
     });
 
-    $('.bq-checkbox').on('change', function () {
-        // let column_name = $(this).attr('data-column-name');
-        // let checkbox_vals = '';
-        // $('input[data-column-name=' + column_name + ']:checked').each(function (i) {
-        //     checkbox_vals += (i > 0 ? '|' : '') + $(this).val();
-        // });
-        updateSearch();
-        // columnSearch(column_name, checkbox_vals, true, false);
-    });
-
-    $('.bq-select').on('change', function () {
-        // let column_name = $(this).attr('data-column-name');
-        // let term = $(this).val();
-        // if ($(this).prop('multiple')) {
-        //     let regex_term = '';
-        //     $.each(term, function (index, value) {
-        //         regex_term += (index > 0 ? '|' : '') + '\\b' + value + '\\b(?!-)';
-        //     });
-        //     columnSearch(column_name, regex_term, true, false);
-        // } else {
-        //     columnSearch(column_name, term, term.startsWith('^'), false);
-        // }
+    $('.bq-checkbox, .bq-select').on('change', function () {
         updateSearch();
     });
 
     $(".reset-btn").on('click', function () {
         $(".autocomplete_select_box").val('').trigger("chosen:updated");
         $('.bq-filter, .bq-select').val('');
-        // $('#status').val(Object.keys(selected_filters).length ? '' : 'current');
-        // $('#status').val(selected_filters_list.length ? '' : 'current');
         $('#status').val('current');
         $('.bq-checkbox').prop('checked', false);
-        // $('.bq-select, .bq-checkbox').trigger('change');
         updateSearch();
-        // $('.bq-filter').trigger('keyup');
     });
 
     $('#gcp-open-btn').on('click', function () {
@@ -458,46 +433,30 @@ $(document).ready(function () {
                 $(this).data(this_join_data);
             });
 
-            $('.joined-table-link').unbind('click');
-            $('.joined-table-link').on('click', function () {
-                window.open('/bq_meta_data/' + $(this)[0].innerText, '_blank');
-            });
-
             tr.next().find('.useful-join-view-btn').on('click', function () {
                 let join_data = $(this).data();
                 let tables = '';
                 join_data['tables'].forEach(function (value, i) {
-                    value = value.replace(':', '.');
-                    tables += ('<li><a class="joined-table-link" title="Open in new tab">' + value + '</a></li>');
-                    // if (i !== join_data['tables'].length - 1) {
-                    //     tables += "<br>";
-                    // }
+                    let joinedTableRefs = get_joined_table_refs(value);
+                    tables += ('<li><a class="joined-table-link" href="' + joinedTableRefs['table_url'] + '" title="Open in new tab">' + joinedTableRefs['formatted_id'] + '</a></li>');
                 });
-                // let [query_comment, ...rest] = join_data['sql'].split('\n');
-                // let sql_query = rest.join('<br>');
                 let sql_query = join_data['sql'].replace('\n', '\n<br>');
                 let dialog_content =
                     '<div class="fw-bold fs-5">' + join_data['title'] + '</div>' +
-                    // '<div class="fw-bold">Join Subject</div><p>' + join_data['title'] + '</p><br>' +
                     '<div>' + join_data['description'] + '</div>' +
                     '<div class="fw-bold mt-3">Joined Table(s):</div><div><ul>' + tables + '</ul></div>' +
                     '<div class="fw-bold">SQL Statement</div>' +
                     '<div><pre><code class="language-sql query-body">' + sql_query + '</code></pre></div>' +
                     '<div class="text-end"><button class="copy-query-btn btn" title="Copy to Clipboard">' +
-                    '<i class="fa fa-clipboard me-1" aria-hidden="true"></i>' + 'COPY' + '</button></div>' +
+                    '<i class="fa fa-clipboard me-1" aria-hidden="true"></i>Copy to Clipboard</button></div>' +
                     '<div class="fw-bold">Joined Condition</div><pre>' + join_data['condition'] + '</pre>';
 
                 $('#useful-join-view-modal').find('.modal-body').html(dialog_content);
 
                 Prism.highlightAll();
 
-                $('.joined-table-link').on('click', function () {
-                    window.open('/bq_meta_data/' + $(this)[0].innerText, '_blank');
-                });
-
                 $(".copy-query-btn").on('click', function () {
-                    let query = $(this).siblings().find('.query-body')[0];
-                    copy_to_clipboard(query);
+                    copy_to_clipboard($(this).parents('.modal-body').find('.query-body'));
                 });
 
                 $('#useful-join-view-modal').find('.modal-sub-title').html(join_data['tableName']);
@@ -511,7 +470,6 @@ $(document).ready(function () {
             tr.removeClass('details-shown');
         }
     });
-
 
     // Add event listener for opening and closing details
     $('#bqmeta').find('tbody').on('click', 'td.details-control', function () {
@@ -533,12 +491,13 @@ $(document).ready(function () {
             tr.removeClass('useful-join-shown');
         }
     });
+
     $('#bq-meta-form').find('i.fa-info-circle').tooltip();
+
     $(".autocomplete_select_box").chosen({
         no_results_text: "Oops, nothing found!",
         width: "100%"
     });
-
 });
 
 
@@ -569,9 +528,9 @@ let set_filters = function () {
             show_all_filters = true;
             $('#show-btn').click();
         }
-        query_param_arr.push(f+'='+selected_filters[f]);
+        query_param_arr.push(f + '=' + selected_filters[f]);
     }
-    let query_param_url = (query_param_arr.length>0 ? ('?'+query_param_arr.join('&')): '');
+    let query_param_url = (query_param_arr.length > 0 ? ('?' + query_param_arr.join('&')) : '');
     return query_param_url
 }
 
@@ -605,22 +564,30 @@ let format_useful_join_details = function (d) {
     join_table += '<thead><tr><th style="width:200px">Join Subject</th><th style="width:400px">Joined Tables</th><th>View</th></tr></thead>';
     join_table += '<tbody>';
     d.forEach(join_info => {
-        let tables = "";
+        let tables = [];
         join_info['tables'].forEach(function (value, i) {
-            value = value.replace(':', '.');
-            tables += ('<a class="joined-table-link" title="Open in new tab">' + value + '</a>');
-            if (i !== join_info['tables'].length - 1) {
-                tables += "<br>";
-            }
+            let joinedTableRefs = get_joined_table_refs(value);
+            tables.push('<div><a class="joined-table-link" href="' + joinedTableRefs['table_url'] + '" title="Open in new tab">' + joinedTableRefs['formatted_id'] + '</a></div>');
         });
         join_table += '<tr>' +
             '<td>' + join_info['title'] + '</td>' +
-            '<td>' + tables + '</td>' +
+            '<td>' + tables.join('<br>') + '</td>' +
             '<td><button class="useful-join-view-btn open-gcp-btn">View Details</button></td>' +
             '</tr>';
     });
     join_table += '</tbody></table></div>';
     return join_table;
+};
+
+
+let get_joined_table_refs = function (full_table_id) {
+    let tableRefs = full_table_id.split(/[:.]/);
+    let table_url = '/search?projectId=' + tableRefs[0] + '&datasetId=' + tableRefs[1] + '&tableId=' + tableRefs[2];
+    let formatted_id = tableRefs.join('.');
+    return {
+        'table_url': table_url,
+        'formatted_id': formatted_id
+    }
 };
 
 
@@ -675,11 +642,7 @@ let formatFullId = function (tblRef, wrapText) {
 
 
 let copy_to_clipboard = function (el) {
-    let $temp = $("<textarea>");
-    $("body").append($temp);
-    $temp.val($(el).text()).focus().select();
-    document.execCommand("copy");
-    $temp.remove();
+    navigator.clipboard.writeText(el.text());
 };
 
 
@@ -850,6 +813,10 @@ let reset_table_style = function (settings) {
     } else {
         csv_button.enable();
     }
+    if (bq_total_entries > api.rows().data().length) {
+        $('#bqmeta_info').append(' (filtered from ' + (bq_total_entries).toLocaleString("en-US") + ' total entries)');
+    }
+
 };
 
 

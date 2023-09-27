@@ -7,7 +7,7 @@ commands:
           command: |
             TIER=TEST
             if [[ ${CIRCLE_BRANCH} =~ bq-table-search-(prod|test|uat).* ]]; then
-              TIER=$(awk -F- '{print toupper($2)}' \<<< ${CIRCLE_BRANCH})
+              TIER=$(awk -F- '{print toupper($4)}' \<<< ${CIRCLE_BRANCH})
             fi
             echo "export TIER=${TIER}" >> $BASH_ENV
             echo "Tier was identified as ${TIER} for branch ${CIRCLE_BRANCH}"

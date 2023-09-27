@@ -27,10 +27,15 @@ body {
     /*font-family: "Roboto","Lucida Grande","DejaVu Sans","Bitstream Vera Sans",Verdana,Arial,sans-serif;*/
     color: #333;
     background-color: #2A537A;
+
 }
 
 main{
     background-color: var(--bs-body-bg);
+}
+
+.main-content{
+    min-height: 80vh;
 }
 
 a {
@@ -551,12 +556,12 @@ tr.useful-join-shown .bqmeta-outline-badge {
     font-size: 7em;
     font-weight: bold;
     color: #777777;
-    min-height: 45%;
+    /*min-height: 45%;*/
 }
 
 .error-code-msg{
     font-size: 3em;
     font-weight: bold;
     color: #577794;
-    margin-bottom: 5em;
+    /*margin-bottom: 5em;*/
 }

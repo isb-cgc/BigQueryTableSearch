@@ -3,7 +3,7 @@
 {{ super() }}
 <script>
     let selected_filters = {{ selected_filters|tojson }};
-    let bq_total_entries = '{{ bq_total_entries }}';
+    let bq_total_entries = {{ bq_total_entries }};
 </script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/bq_meta_search.js') }}"></script>
 
@@ -157,7 +157,7 @@
                 </div>
             </div>
         </div>
-        <div class="custom-width-80 p-3 pb-4">
+        <div class="custom-width-80 px-3 py-4">
             <table id="bqmeta" class="table table-striped pt-2" style="width:100%">
                 <thead>
                 <tr>

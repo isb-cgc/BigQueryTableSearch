@@ -20,6 +20,8 @@ from flask_talisman import Talisman
 import requests
 import logging
 from google.cloud import bigquery
+from datetime import datetime
+from random import randint
 
 logger = logging.getLogger('main_logger')
 
@@ -56,7 +58,13 @@ Talisman(app, strict_transport_security_max_age=hsts_max_age, content_security_p
 GOOGLE_APPLICATION_CREDENTIALS = os.path.join(app.root_path, 'privatekey.json')
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS
 
-global bq_filters, bqt_metadata_file, bq_useful_join, bq_total_entries
+bq_filters = None
+bq_metadata_file_last_modified = None
+bqt_metadata_file = None
+bq_useful_join_last_modified = None
+bq_useful_join = None
+bq_total_entries = None
+# global bq_filters, bq_metadata_file_last_modified, bqt_metadata_file, bq_useful_join_last_modified, bq_useful_join, bq_total_entries
 BQ_ECOSYS_BUCKET = os.environ.get('BQ_ECOSYS_BUCKET',
                                   'https://storage.googleapis.com/webapp-static-files-isb-cgc-dev/bq_ecosys/')
 BQ_FILTER_FILE_NAME = 'bq_meta_filters.json'
@@ -95,12 +103,13 @@ def search(status='current'):
         if request.args.get(f):
             selected_filters[f] = request.args.get(f).lower()
     return render_template("bq_meta_search.html", bq_filters=bq_filters, selected_filters=selected_filters,
-                           bq_total_entries=f'{bq_total_entries:,}')
+                           bq_total_entries=bq_total_entries)
 
 
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
+
 
 def filter_by_prop(rq_meth, rows, attr_list, sub_category, exact_match_search):
     for attr in attr_list:
@@ -218,8 +227,9 @@ def filter_rows(rows, req):
     return rows
 
 
-@app.route("/bq_meta_data", methods=['GET', 'POST'])
-def bq_meta_data():
+@app.route("/search_api", methods=['GET', 'POST'])
+def search_api():
+    setup_app()
     bqt_meta_data = filter_rows(bqt_metadata_file, request)
     for bq_meta_data_row in bqt_meta_data:
         useful_joins = []
@@ -325,11 +335,24 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
 
 
 def setup_app():
-    global bq_filters, bqt_metadata_file, bq_useful_join, bq_total_entries
-    bq_filters = requests.get(BQ_FILTER_FILE_PATH).json()
-    bqt_metadata_file = requests.get(BQ_METADATA_FILE_PATH).json()
-    bq_total_entries = len(bqt_metadata_file) if bqt_metadata_file else 0
-    bq_useful_join = requests.get(BQ_USEFUL_JOIN_FILE_PATH).json()
+    global bq_filters, bq_metadata_file_last_modified, bqt_metadata_file, bq_useful_join_last_modified, bq_useful_join, bq_total_entries
+    curr_metadata_file_head_info = requests.head(BQ_FILTER_FILE_PATH+'?t='+str(randint(1000, 9999)))
+    curr_metadata_file_last_modified = datetime.strptime(curr_metadata_file_head_info.headers['Last-Modified'],
+                                                         '%a, %d %b %Y %H:%M:%S GMT')
+    if not bq_metadata_file_last_modified or (
+            bq_metadata_file_last_modified and (bq_metadata_file_last_modified < curr_metadata_file_last_modified)):
+        bq_metadata_file_last_modified = curr_metadata_file_last_modified
+        bq_filters = requests.get(BQ_FILTER_FILE_PATH).json()
+        bqt_metadata_file = requests.get(BQ_METADATA_FILE_PATH).json()
+        bq_total_entries = len(bqt_metadata_file) if bqt_metadata_file else 0
+
+    curr_useful_join_file_head_info = requests.head(BQ_USEFUL_JOIN_FILE_PATH)
+    curr_useful_join_file_last_modified = datetime.strptime(curr_useful_join_file_head_info.headers['Last-Modified'],
+                                                            '%a, %d %b %Y %H:%M:%S GMT')
+    if not bq_useful_join_last_modified or (
+            bq_useful_join_last_modified and (bq_useful_join_last_modified < curr_useful_join_file_last_modified)):
+        bq_useful_join_last_modified = curr_useful_join_file_last_modified
+        bq_useful_join = requests.get(BQ_USEFUL_JOIN_FILE_PATH).json()
 
 
 setup_app()
