@@ -42,76 +42,79 @@
 
     {% endblock %}
 </head>
-<header class="navbar bq-bg-dark p-0 shadow flex-md-nowrap fixed-top">
-    <a href="/" class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 text-white d-flex align-items-center">
-        <img class="me-2" src="{{ url_for('static', filename='img/isb-cgc-primary-reverse.png') }}" width="25px"
-             alt="ISB-CGC logo">
-        <span class="fs-5">BigQuery Table Search</span>
-    </a>
-    <ul class="nav col-md-4 justify-content-end pe-3">
-        <li class="nav-item">
-            <a target="_blank" rel="noreferrer" href="https://isb-cgc.org/" class="nav-link px-2">ISB-CGC</a>
-        </li>
-        <div class="dropdown">
-            <a type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
-               data-bs-offset="10,20">
-                <!--            <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-offset="10,20">-->
-                Resources
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item"
-                       href="https://isb-cancer-genomics-cloud.readthedocs.io/en/latest/sections/BigQuery.html"
-                       target="_blank" rel="noreferrer">ISB-CGC BigQuery Documentation</a></li>
-                <li><a class="dropdown-item"
-                       href="https://isb-cancer-genomics-cloud.readthedocs.io/en/latest/sections/progapi/bigqueryGUI/LinkingBigQueryToIsb-cgcProject.html"
-                       target="_blank" rel="noreferrer">ISB-CGC BigQuery Access Info</a></li>
-                <li><a class="dropdown-item" href="https://console.cloud.google.com/bigquery" target="_blank"
-                       rel="noreferrer">Google BigQuery Console</a></li>
-                <li><a class="dropdown-item" href="https://cloud.google.com/bigquery/what-is-bigquery" target="_blank"
-                       rel="noreferrer">What is BigQuery?</a></li>
-            </ul>
-        </div>
-        <li class="nav-item"><a href="#" class="nav-link px-2">FAQs</a></li>
-        <li class="nav-item"><a href="#" class="nav-link px-2">About</a></li>
-    </ul>
 
-    <ul class="navbar-nav flex-row d-md-none">
-        <li class="nav-item text-nowrap">
-            <button class="nav-link px-3 text-white" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbarSearch" aria-controls="navbarSearch" aria-expanded="false"
-                    aria-label="Toggle search">
-                <svg class="bi">
-                    <use xlink:href="#search"></use>
-                </svg>
-            </button>
-        </li>
-        <li class="nav-item text-nowrap">
-            <button class="nav-link px-3 text-white" type="button" data-bs-toggle="offcanvas"
-                    data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false"
-                    aria-label="Toggle navigation">
-                <svg class="bi">
-                    <use xlink:href="#list"></use>
-                </svg>
-            </button>
-        </li>
-    </ul>
-
-    <!--    <div id="navbarSearch" class="navbar-search w-100 collapse">-->
-    <!--        <input class="form-control w-100 rounded-0 border-0" type="text" placeholder="Search" aria-label="Search">-->
-    <!--    </div>-->
-    <!--</div>-->
-</header>
 <body id="body">
-
+<header class="fixed-top">
+    <div class="bq-bg-dark px-0 py-1">
+        <a target="_blank" href="https://isb-cgc.org/" class="px-3 d-flex align-items-center col-md-3 col-lg-2">
+            <img class="me-2" src="{{ url_for('static', filename='img/isb-cgc-primary-reverse.png') }}" width="21px"
+                 alt="ISB-CGC logo">
+            <span class="fs-7 fw-bold">ISB-CGC</span>
+        </a>
+    </div>
+    <div class="navbar bq-bg-light p-0 shadow flex-md-nowrap">
+        <a href="/" class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 d-flex align-items-center">
+            <span class="fs-5 fw-bold">BigQuery Table Search</span>
+        </a>
+        <ul class="nav col-md-4 justify-content-end pe-3">
+            <div class="dropdown">
+                <a type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
+                   data-bs-offset="10,20">
+                    <!--            <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-offset="10,20">-->
+                    Resources
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item"
+                           href="https://isb-cancer-genomics-cloud.readthedocs.io/en/latest/sections/BigQuery.html"
+                           target="_blank" rel="noreferrer">ISB-CGC BigQuery Documentation</a></li>
+                    <li><a class="dropdown-item"
+                           href="https://isb-cancer-genomics-cloud.readthedocs.io/en/latest/sections/progapi/bigqueryGUI/LinkingBigQueryToIsb-cgcProject.html"
+                           target="_blank" rel="noreferrer">ISB-CGC BigQuery Access Info</a></li>
+                    <li><a class="dropdown-item" href="https://console.cloud.google.com/bigquery" target="_blank"
+                           rel="noreferrer">Google BigQuery Console</a></li>
+                    <li><a class="dropdown-item" href="https://cloud.google.com/bigquery/what-is-bigquery"
+                           target="_blank"
+                           rel="noreferrer">What is BigQuery?</a></li>
+                </ul>
+            </div>
+            <li class="nav-item">
+                <a href="/faq/" class="nav-link px-2">FAQs</a>
+            </li>
+            <li class="nav-item">
+                <a href="/about/" class="nav-link px-2">About</a>
+            </li>
+        </ul>
+<!--        <ul class="navbar-nav flex-row d-md-none">-->
+<!--            <li class="nav-item text-nowrap">-->
+<!--                <button class="nav-link px-3 text-white" type="button" data-bs-toggle="collapse"-->
+<!--                        data-bs-target="#navbarSearch" aria-controls="navbarSearch" aria-expanded="false"-->
+<!--                        aria-label="Toggle search">-->
+<!--                    <svg class="bi">-->
+<!--                        <use xlink:href="#search"></use>-->
+<!--                    </svg>-->
+<!--                </button>-->
+<!--            </li>-->
+<!--            <li class="nav-item text-nowrap">-->
+<!--                <button class="nav-link px-3 text-white" type="button" data-bs-toggle="offcanvas"-->
+<!--                        data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false"-->
+<!--                        aria-label="Toggle navigation">-->
+<!--                    <svg class="bi">-->
+<!--                        <use xlink:href="#list"></use>-->
+<!--                    </svg>-->
+<!--                </button>-->
+<!--            </li>-->
+<!--        </ul>-->
+    </div>
+</header>
 <main id="{% block page_name %}content{% endblock %}" class="main-content">
     {% block content %}
     {% endblock %}
 </main>
-</body>
-<footer class="py-2 text-center bq-bg-dark">
+
+<footer class="py-2 text-center bq-bg-light">
     <div class="container">
         <div class="row">
-            <div class="col-lg-2 text-start">©2023, ISB</div>
+            <div class="col-lg-2 text-start">©2023, ISB-CGC</div>
             <div class="col-lg-8">
                 <div class="mb-3">
                     <a href="/privacy/" target="_blank" rel="noreferrer" class="sr-set">
@@ -129,6 +132,6 @@
         </div>
     </div>
 </footer>
-
+</body>
 
 </html>

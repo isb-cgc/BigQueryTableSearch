@@ -15,15 +15,11 @@
 ###
 
 import os
-from flask import Flask, render_template, request, send_from_directory, jsonify, json, make_response, abort
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_talisman import Talisman
 import requests
 import logging
 from google.cloud import bigquery
-# , storage, exceptions
-from oauth2client.client import GoogleCredentials
-
-# from oauth2client.client import flow_from_clientsecrets, GoogleCredentials
 
 logger = logging.getLogger('main_logger')
 
@@ -60,8 +56,20 @@ Talisman(app, strict_transport_security_max_age=hsts_max_age, content_security_p
 GOOGLE_APPLICATION_CREDENTIALS = os.path.join(app.root_path, 'privatekey.json')
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS
 
+global bq_filters, bqt_metadata_file, bq_useful_join, bq_total_entries
 BQ_ECOSYS_BUCKET = os.environ.get('BQ_ECOSYS_BUCKET',
                                   'https://storage.googleapis.com/webapp-static-files-isb-cgc-dev/bq_ecosys/')
+BQ_FILTER_FILE_NAME = 'bq_meta_filters.json'
+BQ_FILTER_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_FILTER_FILE_NAME
+BQ_METADATA_FILE_NAME = 'bq_meta_data.json'
+BQ_METADATA_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_METADATA_FILE_NAME
+BQ_USEFUL_JOIN_FILE_NAME = 'bq_useful_join.json'
+BQ_USEFUL_JOIN_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_USEFUL_JOIN_FILE_NAME
+
+
+@app.route("/faq/")
+def faq():
+    return render_template("faq.html")
 
 
 @app.route("/about/")
@@ -74,30 +82,25 @@ def privacy():
     return render_template("privacy.html")
 
 
-@app.route("/bq_meta_data/<proj_id>.<dataset_id>.<table_id>/", methods=['GET', 'POST'])
-@app.route("/", methods=['GET', 'POST'])
-def home(proj_id=None, dataset_id=None, table_id=None):
-    bq_filter_file_name = 'bq_meta_filters.json'
-    bq_filter_file_path = BQ_ECOSYS_BUCKET + bq_filter_file_name
-    bq_filters = requests.get(bq_filter_file_path).json()
-    # bq_filters['selected_table_full_id'] = table_id
-    if proj_id and dataset_id and table_id:
-        bq_filters['selected_table_full_id'] = f'{proj_id}.{dataset_id}.{table_id}'
-    selected_filters_list = []
-    if request.method == 'POST':
-        rq_meth = request.form
-    else:
-        rq_meth = request.args
+@app.route("/", methods=['POST', 'GET'])
+def home():
+    return redirect(url_for('search', status='current'))
 
-    filter_list = ['projectId', 'datasetId', 'tableId', 'friendlyName', 'description', 'field_name', 'labels', 'access',
-                   'status', 'category', 'experimental_strategy', 'program', 'source', 'data_type',
-                   'reference_genome']
-    for f in filter_list:
-        if rq_meth.get(f):
-            selected_filters_list.append('{filter}={value}'.format(filter=f, value=rq_meth.get(f)))
-    bq_filters['selected_filters'] = '&'.join(selected_filters_list)
-    return render_template("bq_meta_search.html", bq_filters=bq_filters)
 
+@app.route("/search", methods=['POST', 'GET'])
+def search(status='current'):
+    selected_filters = {}
+    for f in ['projectId', 'datasetId', 'tableId', 'friendlyName', 'description', 'field_name', 'labels',
+              'status', 'category', 'experimental_strategy', 'program', 'source', 'data_type', 'reference_genome']:
+        if request.args.get(f):
+            selected_filters[f] = request.args.get(f).lower()
+    return render_template("bq_meta_search.html", bq_filters=bq_filters, selected_filters=selected_filters,
+                           bq_total_entries=f'{bq_total_entries:,}')
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
 def filter_by_prop(rq_meth, rows, attr_list, sub_category, exact_match_search):
     for attr in attr_list:
@@ -197,12 +200,14 @@ def filter_rows(rows, req):
     else:
         rq_meth = req.args
     generic_filters = ['description', 'friendlyName']
-    tbl_ref_filters = ['projectId', 'datasetId', 'tableId']
-    label_filters = ['access', 'status', 'category', 'experimental_strategy', 'data_type', 'source', 'program',
+    tbl_ref_filters = ['projectId']
+    tbl_ref_filters2 = ['datasetId', 'tableId']
+    label_filters = ['status', 'category', 'experimental_strategy', 'data_type', 'source', 'program',
                      'reference_genome']
 
     filter_prop_list = [{'attr_list': generic_filters, 'subcategory': None, 'is_exact_match': False},
-                        {'attr_list': tbl_ref_filters, 'subcategory': 'tableReference', 'is_exact_match': False},
+                        {'attr_list': tbl_ref_filters, 'subcategory': 'tableReference', 'is_exact_match': True},
+                        {'attr_list': tbl_ref_filters2, 'subcategory': 'tableReference', 'is_exact_match': False},
                         {'attr_list': label_filters, 'subcategory': 'labels', 'is_exact_match': True}]
     for filter_prop in filter_prop_list:
         rows = filter_by_prop(rq_meth, rows, filter_prop['attr_list'], filter_prop['subcategory'],
@@ -215,12 +220,7 @@ def filter_rows(rows, req):
 
 @app.route("/bq_meta_data", methods=['GET', 'POST'])
 def bq_meta_data():
-    bq_meta_data_file_name = 'bq_meta_data.json'
-    bq_meta_data_file_path = BQ_ECOSYS_BUCKET + bq_meta_data_file_name
-    bqt_meta_data = filter_rows(requests.get(bq_meta_data_file_path).json(), request)
-    bq_useful_join_file_name = 'bq_useful_join.json'
-    bq_useful_join_file_path = BQ_ECOSYS_BUCKET + bq_useful_join_file_name
-    bq_useful_join = requests.get(bq_useful_join_file_path).json()
+    bqt_meta_data = filter_rows(bqt_metadata_file, request)
     for bq_meta_data_row in bqt_meta_data:
         useful_joins = []
         row_id = bq_meta_data_row['id']
@@ -232,32 +232,26 @@ def bq_meta_data():
     return jsonify(bqt_meta_data)
 
 
-def get_nested_data(row_cell):
-    nested_cell_data_dict = {}
-    for sub_row in row_cell:
-        for sub_key in sub_row.keys():
-            if type(sub_row[sub_key]) is list:
-                # double_nested_cell_data_dict = {}
-                for double_sub_row in sub_row[sub_key]:
-                    for double_sub_key in double_sub_row.keys():
-                        if nested_cell_data_dict.get(f'{sub_key}.{double_sub_key}'):
-                            nested_cell_data_dict[f'{sub_key}.{double_sub_key}'].append(
-                                f'{sub_key}.{double_sub_key}:{double_sub_row[double_sub_key]}')
-                        else:
-                            nested_cell_data_dict[f'{sub_key}.{double_sub_key}'] = [
-                                f'{sub_key}.{double_sub_key}:{double_sub_row[double_sub_key]}']
-                            # nested_cell_data_dict[double_sub_key] = [double_sub_row[double_sub_key]]
-                # print(sub_row[sub_key])
-                # return get_nested_data(sub_row[sub_key])
-            else:
-                if nested_cell_data_dict.get(sub_key):
-                    nested_cell_data_dict[sub_key].append(f'single-{sub_key}:{sub_row[sub_key]}')
-                    # nested_cell_data_dict[sub_key].append(sub_row[sub_key])
-
-                else:
-                    nested_cell_data_dict[sub_key] = [f'single-{sub_key}:{sub_row[sub_key]}']
-                # nested_cell_data_dict[sub_key] = [sub_row[sub_key]]
-    return nested_cell_data_dict
+# def get_nested_data(row_cell):
+#     nested_cell_data_dict = {}
+#     for sub_row in row_cell:
+#         for sub_key in sub_row.keys():
+#             if type(sub_row[sub_key]) is list:
+#                 for double_sub_row in sub_row[sub_key]:
+#                     for double_sub_key in double_sub_row.keys():
+#                         if nested_cell_data_dict.get(f'{sub_key}.{double_sub_key}'):
+#                             nested_cell_data_dict[f'{sub_key}.{double_sub_key}'].append(
+#                                 f'{sub_key}.{double_sub_key}:{double_sub_row[double_sub_key]}')
+#                         else:
+#                             nested_cell_data_dict[f'{sub_key}.{double_sub_key}'] = [
+#                                 f'{sub_key}.{double_sub_key}:{double_sub_row[double_sub_key]}']
+#             else:
+#                 if nested_cell_data_dict.get(sub_key):
+#                     nested_cell_data_dict[sub_key].append(f'single-{sub_key}:{sub_row[sub_key]}')
+#
+#                 else:
+#                     nested_cell_data_dict[sub_key] = [f'single-{sub_key}:{sub_row[sub_key]}']
+#     return nested_cell_data_dict
 
 
 def get_schema_fields(schema_field):
@@ -287,53 +281,12 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
         else:
             client = bigquery.Client(project=proj_id)
             rows_iter = client.list_rows(f'{proj_id}.{dataset_id}.{table_id}', max_results=8)
-            # table_data = []
-            # column_names_dic = []
             if rows_iter and rows_iter.total_rows:
                 schema_fields = [schema.to_api_repr() for schema in list(rows_iter.schema)]
-
-                # for sf in schema_fields:
-                #     if sf.fields:
-                #         for sub_field in sf.fields:
-                #             if sub_field.fields:
-                #                 for double_sub_field in sub_field.fields:
-                #                     column_names.append(f'{sf.name}.{sub_field.name}.{double_sub_field.name}')
-                #             else:
-                #                 column_names.append(f'{sf.name}.{sub_field.name}')
-                #     else:
-                #         column_names.append(sf.name)
                 tbl_data = [dict(row) for row in list(rows_iter)]
-                # print(list(rows[0].values()))
-
-                # for row in rows:
-                #     row_data = []
-                #     for column_name in row.keys():
-                #         row_cell = row.get(column_name)
-                #         # print(column_name)
-                #         if type(row_cell) is list:
-                #             nested_cell_data_dict = get_nested_data(row_cell)
-                #
-                #             # nested_cell_data_dict = {}
-                #             # for sub_row in row_cell:
-                #             #     for sub_key in sub_row.keys():
-                #             #         if nested_cell_data_dict.get(sub_key):
-                #             #             nested_cell_data_dict[sub_key].append(sub_row[sub_key])
-                #             #         else:
-                #             #             nested_cell_data_dict[sub_key] = [sub_row[sub_key]]
-                #             row_data.append(list(nested_cell_data_dict.values()))
-                #         else:
-                #             row_data.append(row_cell)
-                #
-                #     table_data.append(row_data)
-
-                # print(rows_iter.first_page_response)
-                # if len(rows) > 0:
-                # print(table_rows[0])
                 result = {
                     'tbl_data': tbl_data,
-                    # 'table_data': table_data,
                     'schema_fields': schema_fields
-                    # 'column_names_dic': column_names_dic
                 }
 
             else:
@@ -343,43 +296,6 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
                         dataset_id=dataset_id,
                         table_id=table_id)
                 }
-
-            # bq_service = get_bigquery_service()
-            # dataset = bq_service.datasets().get(projectId=proj_id, datasetId=dataset_id).execute()
-            # is_public = False
-            # for access_entry in dataset['access']:
-            #     if access_entry.get('role') == 'READER' and access_entry.get('specialGroup') == 'allAuthenticatedUsers':
-            #         is_public = True
-            #         break
-            # if is_public:
-            #     tbl_data=bq_service.tables().get(projectId=proj_id, datasetId=dataset_id, tableId=table_id).execute()
-            #     if tbl_data.get('type') == 'VIEW' and tbl_data.get('view') and tbl_data.get('view').get('query'):
-            #         view_query_template = '''#standardSql
-            #                 {query_stmt}
-            #                 LIMIT {max}'''
-            #         view_query = view_query_template.format(query_stmt=tbl_data['view']['query'], max=MAX_ROW)
-            #         response = bq_service.jobs().query(
-            #             projectId=settings.BIGQUERY_PROJECT_ID,
-            #             body={ 'query': view_query  }).execute()
-            #     else:
-            #         response = bq_service.tabledata().list(projectId=proj_id, datasetId=dataset_id, tableId=table_id,
-            #                                            maxResults=MAX_ROW).execute()
-            #     if response and int(response['totalRows']) > 0:
-            #         result = {
-            #             'rows': response['rows']
-            #         }
-            #     else:
-            #         result = {
-            #             'message': 'No record has been found for table {proj_id}.{dataset_id}.{table_id}.'.format(
-            #                 proj_id=proj_id,
-            #                 dataset_id=dataset_id,
-            #                 table_id=table_id)
-            #         }
-            # else:
-            #     status = 401
-            #     result = {
-            #         'message': "Preview is not available for this table/view."
-            #     }
 
     except ValueError as e:
         logger.error(
@@ -392,13 +308,6 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
         result = {
             'message': "There was an error while processing this request."
         }
-        # if status == 403:
-        #     result = {
-        #         'message': "Your attempt to preview this table [{proj_id}.{dataset_id}.{table_id}] was denied.".format(
-        #             proj_id=proj_id,
-        #             dataset_id=dataset_id,
-        #             table_id=table_id)
-        #     }
 
     except Exception as e:
         status = 503
@@ -415,10 +324,15 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
     return jsonify(result)
 
 
-# @app.route('/_ah/warmup')
-# def warmup():
-#     # Handle your warmup logic here, e.g. set up a database connection pool
-#     return '', 200, {}
+def setup_app():
+    global bq_filters, bqt_metadata_file, bq_useful_join, bq_total_entries
+    bq_filters = requests.get(BQ_FILTER_FILE_PATH).json()
+    bqt_metadata_file = requests.get(BQ_METADATA_FILE_PATH).json()
+    bq_total_entries = len(bqt_metadata_file) if bqt_metadata_file else 0
+    bq_useful_join = requests.get(BQ_USEFUL_JOIN_FILE_PATH).json()
+
+
+setup_app()
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)

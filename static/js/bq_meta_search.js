@@ -17,11 +17,14 @@
  */
 
 $(document).ready(function () {
+    let query_param_url = set_filters();
     let table = $('#bqmeta').DataTable({
         dom: 'lfBrtip',
         ajax: {
-            url: '/bq_meta_data' + (selected_filters ? ('?' + selected_filters) : ''),
+            method: 'GET',
+            url: '/bq_meta_data' + query_param_url,
             dataSrc: ''
+
         },
         buttons: [
             {
@@ -290,51 +293,63 @@ $(document).ready(function () {
             }
         ],
         serverSide: false,
+        processing: true,
         order: [[1, 'asc']],
         initComplete: function (settings, json) {
-
-            $('.spinner').remove();
-            if (selected_table_full_id !== "") {
-                let parts = selected_table_full_id.split('.');
-                if (parts[0]) {
-                    let project_id = parts[0];
-                    $('#search-by-project-id option').each(function () {
-                        if ($(this)[0].innerText === project_id) {
-                            $(this).prop('selected', true);
-                        }
-                    });
-                    // columnSearch('projectId', project_id);
-                }
-                if (parts[1]) {
-                    let dataset_id = parts[1];
-                    dataset_id = "\"" + parts[1] + "\"";
-                    $('#search-by-dataset-id')[0].value = dataset_id;
-                    // columnSearch('datasetId', dataset_id);
-                }
-                if (parts[2]) {
-                    let table_id = "\"" + parts[2] + "\"";
-                    $('#search-by-table-id')[0].value = table_id;
-                    // columnSearch('tableId', table_id);
-                }
-                updateTable();
-                // $('#show-btn').click();
-            }
-
-            reset_table_style(settings);
+            window.history.pushState(null,'BigQuery Table Search', query_param_url);
         },
         drawCallback: function (settings) {
             reset_table_style(settings);
             set_gcp_open_btn($('#bqmeta'));
-        },
-        // language: {
-        //     "infoFiltered": ""
-        // }
-
+            $('#bqmeta_info').append(' (filtered from '+ bq_total_entries +' total entries)')
+        }
     });
+
+    let updateSearch = function () {
+        let filter_arr = [];
+        $('.bq-filter').each(function () {
+            let term = $(this).val();
+            if (term !== '') {
+                let column_name = $(this).attr('data-column-name');
+                filter_arr.push(column_name + '=' + term);
+            }
+        });
+        $('.bq-select').each(function () {
+            let column_name = $(this).attr('data-column-name');
+            let term = $(this).val();
+            if (term.length > 0) {
+                let col_filter;
+                if ($(this).prop('multiple')) {
+                    let regex_term = term.join('|');
+                    col_filter = column_name + '=' + regex_term;
+                } else {
+                    col_filter = column_name + '=' + term;
+                }
+                filter_arr.push(col_filter);
+            }
+        });
+        let checkbox_filters = {};
+        $('input.bq-checkbox:checked').each(function () {
+            let column_name = $(this).attr('data-column-name');
+            let term = $(this).val();
+            if (column_name in checkbox_filters) {
+                checkbox_filters[column_name].push(term);
+            } else {
+                checkbox_filters[column_name] = [term];
+            }
+        });
+        for (col in checkbox_filters) {
+            filter_arr.push(col + '=' + checkbox_filters[col].join('|'))
+        }
+        let filter_str = filter_arr.join('&');
+        let updated_url = "/bq_meta_data" + (filter_str ? '?' + filter_str : '');
+        table.ajax.url(updated_url).load();
+        window.history.pushState(null,'BigQuery Table Search', filter_str ? ('?'+filter_str):'');
+    };
 
     $('.bq-filter').on('keyup', function () {
         // let column_name = $(this).attr('data-column-name');
-        updateTable();
+        updateSearch();
         // columnSearch(column_name, this.value);
     });
 
@@ -344,7 +359,7 @@ $(document).ready(function () {
         // $('input[data-column-name=' + column_name + ']:checked').each(function (i) {
         //     checkbox_vals += (i > 0 ? '|' : '') + $(this).val();
         // });
-        updateTable();
+        updateSearch();
         // columnSearch(column_name, checkbox_vals, true, false);
     });
 
@@ -360,16 +375,18 @@ $(document).ready(function () {
         // } else {
         //     columnSearch(column_name, term, term.startsWith('^'), false);
         // }
-        updateTable();
+        updateSearch();
     });
 
     $(".reset-btn").on('click', function () {
         $(".autocomplete_select_box").val('').trigger("chosen:updated");
         $('.bq-filter, .bq-select').val('');
-        $('#status').val(selected_filters ? '' : 'current');
+        // $('#status').val(Object.keys(selected_filters).length ? '' : 'current');
+        // $('#status').val(selected_filters_list.length ? '' : 'current');
+        $('#status').val('current');
         $('.bq-checkbox').prop('checked', false);
         // $('.bq-select, .bq-checkbox').trigger('change');
-        updateTable();
+        updateSearch();
         // $('.bq-filter').trigger('keyup');
     });
 
@@ -495,88 +512,8 @@ $(document).ready(function () {
         }
     });
 
-    let updateTable = function () {
-        let filter_arr = [];
-        $('.bq-filter').each(function () {
-            let term = $(this).val();
-            if (term !== '') {
-                let column_name = $(this).attr('data-column-name');
-                filter_arr.push(column_name + '=' + term);
-            }
-        });
-        $('.bq-select').each(function () {
-            let column_name = $(this).attr('data-column-name');
-            let term = $(this).val();
-            if (term.length > 0) {
-                let col_filter;
-                if ($(this).prop('multiple')) {
-                    let regex_term = term.join('|');
-                    col_filter = column_name + '=' + regex_term;
-                } else {
-                    col_filter = column_name + '=' + term;
-                }
-                filter_arr.push(col_filter);
-            }
-        });
-        let checkbox_filters = {};
-        $('input.bq-checkbox:checked').each(function() {
-            let column_name = $(this).attr('data-column-name');
-            let term = $(this).val();
-            if (column_name in checkbox_filters){
-                checkbox_filters[column_name].push(term);
-            } else{
-                checkbox_filters[column_name] = [term];
-            }
-        });
-        for (col in checkbox_filters){
-            filter_arr.push(col + '=' + checkbox_filters[col].join('|'))
-        }
 
-        let filter_str = filter_arr.join('&');
-
-        let updated_url = "/bq_meta_data" + (filter_str ? '?' + filter_str : '');
-        console.log(updated_url);
-        table.ajax.url(updated_url).load();
-    };
-    let columnSearch = function (column_name, term, regex_search, smart_search) {
-        // let exact_match = term.match(/^\".*\"$/);
-        // if (exact_match != null && exact_match.length > 0) {
-        //     regex_search = true;
-        //     smart_search = false;
-        //     term = '^' + term.slice(1, term.length - 1) + '$';
-        // }
-
-        // console.log('exact_match');
-        // console.log(exact_match);
-        // console.log('regex_search');
-        // console.log(regex_search);
-        // console.log('smart_search');
-        // console.log(smart_search);
-        // console.log('term');
-        // console.log(term);
-        // console.log('column_name');
-        // console.log(column_name);
-        // if (term !== ''){
-        let updated_url = "/bq_meta_data" + (term !== '' ? ('?' + column_name + '=' + term) : '');
-        // console.log(updated_url);
-        table.ajax.url(updated_url).load();
-    };
-
-// let columnSearch = function (column_name, term, regex_search, smart_search) {
-//     let exact_match = term.match(/^\".*\"$/);
-//
-//     if (exact_match != null && exact_match.length > 0) {
-//         regex_search = true;
-//         smart_search = false;
-//         term = '^' + term.slice(1, term.length - 1) + '$';
-//     }
-//     table
-//         .columns(column_name + ':name')
-//         .search(term, regex_search, smart_search)
-//         .draw();
-// };
-
-// Add event listener for opening and closing details
+    // Add event listener for opening and closing details
     $('#bqmeta').find('tbody').on('click', 'td.details-control', function () {
         let tr = $(this).closest('tr');
         let row = table.row(tr);
@@ -597,15 +534,46 @@ $(document).ready(function () {
         }
     });
     $('#bq-meta-form').find('i.fa-info-circle').tooltip();
-    $('#status').val(selected_filters ? '' : 'current');
-    $('#status').trigger('change');
     $(".autocomplete_select_box").chosen({
-        // disable_search_threshold: 10,
         no_results_text: "Oops, nothing found!",
         width: "100%"
     });
-})
-;
+
+});
+
+
+let set_filters = function () {
+    let query_param_arr = [];
+    let select_filters = ['status', 'program', 'projectId', 'reference_genome', 'source', 'data_type', 'experimental_strategy']
+    let text_filters = ['friendlyName', 'datasetId', 'tableId', 'description', 'field_name', 'labels'];
+    let show_more_filters = ['projectId', 'datasetId', 'tableId', 'description', 'field_name', 'labels'];
+    let show_all_filters = false;
+    for (const f in selected_filters) {
+        if (select_filters.includes(f)) {
+            $("select[data-column-name='" + f + "'] option").each(function () {
+                for (const v of selected_filters[f].split('|')) {
+                    if ($(this).val() === v) {
+                        $(this).prop('selected', true);
+                        break;
+                    }
+                }
+            });
+        } else if (text_filters.includes(f)) {
+            $("input[data-column-name='" + f + "']").val(selected_filters[f]);
+        } else if (f === 'category') {
+            $("input[data-column-name='" + f + "']").each(function () {
+                $(this).prop('checked', selected_filters[f].includes($(this).val()));
+            });
+        }
+        if (!show_all_filters && show_more_filters.includes(f)) {
+            show_all_filters = true;
+            $('#show-btn').click();
+        }
+        query_param_arr.push(f+'='+selected_filters[f]);
+    }
+    let query_param_url = (query_param_arr.length>0 ? ('?'+query_param_arr.join('&')): '');
+    return query_param_url
+}
 
 
 let show_tbl_preview = function (row, tr, td, err_mssg) {

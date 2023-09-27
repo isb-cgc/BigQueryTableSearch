@@ -2,8 +2,8 @@
 {% block head %}
 {{ super() }}
 <script>
-    let selected_filters = '{{ bq_filters["selected_filters"]|safe }}';
-    let selected_table_full_id = '{{ bq_filters["selected_table_full_id"]|safe }}';
+    let selected_filters = {{ selected_filters|tojson }};
+    let bq_total_entries = '{{ bq_total_entries }}';
 </script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/bq_meta_search.js') }}"></script>
 
@@ -58,9 +58,9 @@
                                        value="{{ option.value }}" data-column-name="category">
 
                                 <label class="label-filter form-check-label"
-                                       for="cat_chbx_{{ loop.index }}">{{ option.label }}</label>
+                                       for="cat_chbx_{{ loop.index }}">{{ option.label }}
                                 <i class="fa fa-info-circle" data-placement="bottom"
-                                   title="{{ option.description }}"></i>
+                                   title="{{ option.description }}"></i></label>
                             </div>
                             {% endfor %}
                         </div>
@@ -208,6 +208,7 @@
             </div>
             <div class="modal-body">
             </div>
+            <div class="modal-footer"><button type="button" class="btn px-3" data-bs-dismiss="modal">Close</button></div>
         </div>
     </div>
 </div>
