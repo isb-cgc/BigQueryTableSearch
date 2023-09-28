@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+
+{% block page_name %}{{error_code}}{% endblock %}
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="py-5 error-code-banner">{{error_code}}</div>
+    <div class="error-code-msg">{{error_message}}</div>
+</div>
+
+{% endblock %}
