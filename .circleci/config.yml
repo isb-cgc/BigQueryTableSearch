@@ -133,7 +133,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
                 - bq-table-search-test
                 - bq-table-search-prod
                 - bq-table-search-uat
