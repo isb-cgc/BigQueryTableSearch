@@ -18,12 +18,17 @@
 
 $(document).ready(function () {
     let query_param_url = set_filters();
+    // $.fn.dataTable.ext.errMode = 'throw';
+    // $.fn.dataTable.ext.errMode = 'throw';
     let table = $('#bqmeta').DataTable({
         dom: 'lfBrtip',
         ajax: {
             method: 'GET',
             url: '/search_api' + query_param_url,
-            dataSrc: ''
+            dataSrc: '',
+            // error: function(){
+            //
+            // }
         },
         buttons: [
             {
@@ -306,7 +311,9 @@ $(document).ready(function () {
         }
 
     });
-
+    // $('#bqmeta').on('error.dt', function (e, settings, techNote, message) {
+    //     console.log('An error has been reported by DataTables: ', message);
+    // })
     let updateSearch = function () {
         let filter_arr = [];
         $('.bq-filter').each(function () {

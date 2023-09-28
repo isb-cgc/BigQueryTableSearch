@@ -18,12 +18,10 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_talisman import Talisman
 import requests
-import logging
-from google.cloud import bigquery
+# import logging
+from google.cloud import bigquery, logging
 from datetime import datetime
 from random import randint
-
-logger = logging.getLogger('main_logger')
 
 app = Flask(__name__)
 
@@ -57,14 +55,14 @@ Talisman(app, strict_transport_security_max_age=hsts_max_age, content_security_p
 
 GOOGLE_APPLICATION_CREDENTIALS = os.path.join(app.root_path, 'privatekey.json')
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS
+logging_client = logging.Client()
 
 bq_filters = None
 bq_metadata_file_last_modified = None
-bqt_metadata_file = None
+bq_metadata_file = None
 bq_useful_join_last_modified = None
 bq_useful_join = None
-bq_total_entries = None
-# global bq_filters, bq_metadata_file_last_modified, bqt_metadata_file, bq_useful_join_last_modified, bq_useful_join, bq_total_entries
+bq_total_entries = 0
 BQ_ECOSYS_BUCKET = os.environ.get('BQ_ECOSYS_BUCKET',
                                   'https://storage.googleapis.com/webapp-static-files-isb-cgc-dev/bq_ecosys/')
 BQ_FILTER_FILE_NAME = 'bq_meta_filters.json'
@@ -96,12 +94,19 @@ def home():
 
 
 @app.route("/search", methods=['POST', 'GET'])
-def search(status='current'):
+def search(status=None):
     selected_filters = {}
+    if request.method == 'POST':
+        rq_meth = request.form
+    else:
+        rq_meth = request.args
+
     for f in ['projectId', 'datasetId', 'tableId', 'friendlyName', 'description', 'field_name', 'labels',
               'status', 'category', 'experimental_strategy', 'program', 'source', 'data_type', 'reference_genome']:
-        if request.args.get(f):
+        if rq_meth.get(f):
             selected_filters[f] = request.args.get(f).lower()
+    if not bq_filters or bq_metadata_file or bq_useful_join:
+        setup_app()
     return render_template("bq_meta_search.html", bq_filters=bq_filters, selected_filters=selected_filters,
                            bq_total_entries=bq_total_entries)
 
@@ -230,38 +235,10 @@ def filter_rows(rows, req):
 @app.route("/search_api", methods=['GET', 'POST'])
 def search_api():
     setup_app()
-    bqt_meta_data = filter_rows(bqt_metadata_file, request)
-    for bq_meta_data_row in bqt_meta_data:
-        useful_joins = []
-        row_id = bq_meta_data_row['id']
-        for join in bq_useful_join:
-            if join['id'] == row_id:
-                useful_joins = join['joins']
-                break
-        bq_meta_data_row['usefulJoins'] = useful_joins
-    return jsonify(bqt_meta_data)
-
-
-# def get_nested_data(row_cell):
-#     nested_cell_data_dict = {}
-#     for sub_row in row_cell:
-#         for sub_key in sub_row.keys():
-#             if type(sub_row[sub_key]) is list:
-#                 for double_sub_row in sub_row[sub_key]:
-#                     for double_sub_key in double_sub_row.keys():
-#                         if nested_cell_data_dict.get(f'{sub_key}.{double_sub_key}'):
-#                             nested_cell_data_dict[f'{sub_key}.{double_sub_key}'].append(
-#                                 f'{sub_key}.{double_sub_key}:{double_sub_row[double_sub_key]}')
-#                         else:
-#                             nested_cell_data_dict[f'{sub_key}.{double_sub_key}'] = [
-#                                 f'{sub_key}.{double_sub_key}:{double_sub_row[double_sub_key]}']
-#             else:
-#                 if nested_cell_data_dict.get(sub_key):
-#                     nested_cell_data_dict[sub_key].append(f'single-{sub_key}:{sub_row[sub_key]}')
-#
-#                 else:
-#                     nested_cell_data_dict[sub_key] = [f'single-{sub_key}:{sub_row[sub_key]}']
-#     return nested_cell_data_dict
+    filtered_meta_data = []
+    if bq_metadata_file:
+        filtered_meta_data = filter_rows(bq_metadata_file, request)
+    return jsonify(filtered_meta_data)
 
 
 def get_schema_fields(schema_field):
@@ -283,7 +260,7 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
     MAX_ROW = 8
     try:
         if not proj_id or not dataset_id or not table_id:
-            logger.warning("[WARNING] Required ID missing: {}.{}.{}".format(proj_id, dataset_id, table_id))
+            app.logger.warning("[WARNING] Required ID missing: {}.{}.{}".format(proj_id, dataset_id, table_id))
             status = 503
             result = {
                 'message': "There was an error while processing this request: one or more required parameters (project id, dataset_id or table_id) were not supplied."
@@ -308,12 +285,12 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
                 }
 
     except ValueError as e:
-        logger.error(
+        app.logger.error(
             "[ERROR] While attempting to retrieve preview data for {proj_id}.{dataset_id}.{table_id} table:".format(
                 proj_id=proj_id,
                 dataset_id=dataset_id,
                 table_id=table_id))
-        logger.exception(e)
+        app.logger.exception(e)
         status = 500
         result = {
             'message': "There was an error while processing this request."
@@ -324,38 +301,73 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
         result = {
             'message': "There was an error while processing this request."
         }
-        logger.error(
+        app.logger.error(
             "[ERROR] While attempting to retrieve preview data for {proj_id}.{dataset_id}.{table_id} table:".format(
                 proj_id=proj_id,
                 dataset_id=dataset_id,
                 table_id=table_id))
-        logger.exception(e)
+        app.logger.exception(e)
 
     return jsonify(result)
 
 
 def setup_app():
-    global bq_filters, bq_metadata_file_last_modified, bqt_metadata_file, bq_useful_join_last_modified, bq_useful_join, bq_total_entries
-    curr_metadata_file_head_info = requests.head(BQ_FILTER_FILE_PATH+'?t='+str(randint(1000, 9999)))
-    curr_metadata_file_last_modified = datetime.strptime(curr_metadata_file_head_info.headers['Last-Modified'],
-                                                         '%a, %d %b %Y %H:%M:%S GMT')
-    if not bq_metadata_file_last_modified or (
-            bq_metadata_file_last_modified and (bq_metadata_file_last_modified < curr_metadata_file_last_modified)):
-        bq_metadata_file_last_modified = curr_metadata_file_last_modified
-        bq_filters = requests.get(BQ_FILTER_FILE_PATH).json()
-        bqt_metadata_file = requests.get(BQ_METADATA_FILE_PATH).json()
-        bq_total_entries = len(bqt_metadata_file) if bqt_metadata_file else 0
+    status_code = 200
+    global bq_filters, bq_metadata_file_last_modified, bq_metadata_file, bq_useful_join_last_modified, bq_useful_join, bq_total_entries
+    try:
+        r = requests.head(BQ_METADATA_FILE_PATH + '?t=' + str(randint(1000, 9999)))
+        r.raise_for_status()
+        curr_metadata_file_last_modified = datetime.strptime(r.headers['Last-Modified'], '%a, %d %b %Y %H:%M:%S GMT')
+        useful_join_updated = False
+        tmp_metadata_file = []
+        if not bq_metadata_file_last_modified or (
+                bq_metadata_file_last_modified and (bq_metadata_file_last_modified < curr_metadata_file_last_modified)):
+            bq_metadata_file_last_modified = curr_metadata_file_last_modified
+            bq_filters = requests.get(BQ_FILTER_FILE_PATH).json()
+            tmp_metadata_file = requests.get(BQ_METADATA_FILE_PATH).json()
+            bq_total_entries = len(tmp_metadata_file) if tmp_metadata_file else 0
 
-    curr_useful_join_file_head_info = requests.head(BQ_USEFUL_JOIN_FILE_PATH)
-    curr_useful_join_file_last_modified = datetime.strptime(curr_useful_join_file_head_info.headers['Last-Modified'],
-                                                            '%a, %d %b %Y %H:%M:%S GMT')
-    if not bq_useful_join_last_modified or (
-            bq_useful_join_last_modified and (bq_useful_join_last_modified < curr_useful_join_file_last_modified)):
-        bq_useful_join_last_modified = curr_useful_join_file_last_modified
-        bq_useful_join = requests.get(BQ_USEFUL_JOIN_FILE_PATH).json()
+        r = requests.head(BQ_USEFUL_JOIN_FILE_PATH)
+        curr_useful_join_file_last_modified = datetime.strptime(r.headers['Last-Modified'], '%a, %d %b %Y %H:%M:%S GMT')
+        if not bq_useful_join_last_modified or (
+                bq_useful_join_last_modified and (bq_useful_join_last_modified < curr_useful_join_file_last_modified)):
+            bq_useful_join_last_modified = curr_useful_join_file_last_modified
+            bq_useful_join = requests.get(BQ_USEFUL_JOIN_FILE_PATH).json()
+            useful_join_updated = True
+        if len(tmp_metadata_file) or useful_join_updated:
+            for bq_meta_data_row in tmp_metadata_file:
+                useful_joins = []
+                row_id = bq_meta_data_row['id']
+                for join in bq_useful_join:
+                    if join['id'] == row_id:
+                        useful_joins = join['joins']
+                        break
+                bq_meta_data_row['usefulJoins'] = useful_joins
+            bq_metadata_file = tmp_metadata_file
+
+    except requests.exceptions.HTTPError as e:
+        error_message = 'HTTPError'
+        status_code = e.response.status_code
+    except requests.exceptions.ReadTimeout as e:
+        error_message = 'ReadTimeout'
+        status_code = e.response.status_code
+    except requests.exceptions.ConnectionError as e:
+        error_message = 'ConnectionError'
+        status_code = e.response.status_code
+
+    if status_code != 200:
+        bq_filters = None
+        bq_metadata_file = None
+        bq_useful_join = None
+        bq_total_entries = 0
+        app.logger.error(f'ERROR While attempting to retrieve BQ metadata file: [{status_code}] {error_message}')
 
 
 setup_app()
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
+else:
+    logging_client.logger('app_login_log')
+    logging_client.setup_logging()
+

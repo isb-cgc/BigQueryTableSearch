@@ -2,7 +2,7 @@
 {% block head %}
 {{ super() }}
 <script>
-    let selected_filters = {{ selected_filters|tojson }};
+    let selected_filters = {{ selected_filters | tojson }};
     let bq_total_entries = {{ bq_total_entries }};
 </script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/bq_meta_search.js') }}"></script>
@@ -16,6 +16,7 @@
 
 <div class="container-fluid">
     <div class="row">
+        {% if bq_filters and bq_total_entries %}
         <div class="sidebar border border-right custom-width-20 bg-body-tertiary">
             <div class="offcanvas-md offcanvas-end bg-body-tertiary" tabindex="-1" id="sidebarMenu"
                  aria-labelledby="sidebarMenuLabel">
@@ -59,8 +60,8 @@
 
                                 <label class="label-filter form-check-label"
                                        for="cat_chbx_{{ loop.index }}">{{ option.label }}
-                                <i class="fa fa-info-circle" data-placement="bottom"
-                                   title="{{ option.description }}"></i></label>
+                                    <i class="fa fa-info-circle" data-placement="bottom"
+                                       title="{{ option.description }}"></i></label>
                             </div>
                             {% endfor %}
                         </div>
@@ -191,6 +192,13 @@
                 <tbody></tbody>
             </table>
         </div>
+        {% else %}
+        <div class="text-center my-5 py-5">
+            <div class="error-code-msg mb-3"><i class="fas fa-exclamation-triangle"></i> Unable to Load Data</div>
+            <div class="fw-bold fs-4">Sorry, an error has occurred - Please try again later.</div>
+        </div>
+        {% endif %}
+
     </div>
 </div>
 
@@ -208,7 +216,9 @@
             </div>
             <div class="modal-body">
             </div>
-            <div class="modal-footer"><button type="button" class="btn px-3" data-bs-dismiss="modal">Close</button></div>
+            <div class="modal-footer">
+                <button type="button" class="btn px-3" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
@@ -239,13 +249,14 @@
                 </ul>
                 </p>
                 <p>
-                    Learn about the <a target="_blank" rel="noreferrer" href="https://cloud.google.com/free/docs/gcp-free-tier">
-                        Google Cloud Free Program</a> and run queries at no cost!
+                    Learn about the <a target="_blank" rel="noreferrer"
+                                       href="https://cloud.google.com/free/docs/gcp-free-tier">
+                    Google Cloud Free Program</a> and run queries at no cost!
                 </p>
-<!--                <p>Consider using the-->
-<!--                    <a target="_blank" rel="noreferrer" href="https://cloud.google.com/free/docs/gcp-free-tier">-->
-<!--                        Google Cloud Free Program</a> and run queries at no cost!-->
-<!--                </p>-->
+                <!--                <p>Consider using the-->
+                <!--                    <a target="_blank" rel="noreferrer" href="https://cloud.google.com/free/docs/gcp-free-tier">-->
+                <!--                        Google Cloud Free Program</a> and run queries at no cost!-->
+                <!--                </p>-->
                 <div class="form-check d-flex justify-content-end mt-3">
                     <input id="do-not-show-cb" type="checkbox" class="form-check-input me-1">
                     <label class="form-check-label" for="do-not-show-cb">Do not show this again.</label>
