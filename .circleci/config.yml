@@ -5,7 +5,7 @@ commands:
       - run:
           name: "Set the Tier"
           command: |
-            TIER=TEST
+            TIER=DEV
             if [[ ${CIRCLE_BRANCH} =~ bq-table-search-(prod|test|uat).* ]]; then
               TIER=$(awk -F- '{print toupper($4)}' \<<< ${CIRCLE_BRANCH})
             fi
@@ -14,17 +14,16 @@ commands:
       - run:
           name: "Assign Tier-level vars"
           command: |
-            DEP_BUCKET=${DEPLOYMENT_BUCKET_TEST}
-            DEP_PROJECT_ID=${DEPLOYMENT_PROJECT_ID_TEST}
+            DEP_BUCKET=${DEPLOYMENT_BUCKET_DEV}
+            DEP_PROJECT_ID=${DEPLOYMENT_PROJECT_ID_DEV}
             if [ ! -f deployment.key.json ]; then
               echo "Deployment JSON keyfile not found - loading from CircleCI."
-              KEY=${DEPLOYMENT_KEY_BQ_TABLE_SEARCH_TEST}
-
+              KEY=${DEPLOYMENT_KEY_BQ_TABLE_SEARCH_DEV}
             else
               echo "Deployment JSON keyfile found."
               KEY="NA"
             fi
-            CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_BQ_TABLE_SEARCH_TEST}
+            CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_BQ_TABLE_SEARCH_DEV}
 
             if [[ ${TIER} == "PROD" ]]; then
               KEY=${DEPLOYMENT_KEY_BQ_TABLE_SEARCH_PROD}
@@ -37,16 +36,20 @@ commands:
               DEP_BUCKET=${DEPLOYMENT_BUCKET_UAT}
               DEP_PROJECT_ID=${DEPLOYMENT_PROJECT_ID_UAT}
             elif [[ ${TIER} == "TEST" ]]; then
+              KEY=${DEPLOYMENT_KEY_TEST}
+              CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_TEST}
+              DEP_BUCKET=${DEPLOYMENT_BUCKET_TEST}
+              DEP_PROJECT_ID=${DEPLOYMENT_PROJECT_ID_TEST}
+            elif [[ ${TIER} == "DEV" ]]; then
               echo "Using default deployment configuration for tier ${TIER}"
             else
-              echo "[ERROR] - Unrecognized tier: ${TIER} - exitng."
+              echo "[ERROR] - Unrecognized tier: ${TIER} - exiting."
               exit 1
             fi
             echo "export DEPLOYMENT_KEY=\"${KEY}\"" >> $BASH_ENV
             echo "export DEPLOYMENT_CLIENT_EMAIL=${CLIENT_EMAIL}" >> $BASH_ENV
             echo "export DEPLOYMENT_BUCKET=${DEP_BUCKET}" >> $BASH_ENV
             echo "export DEPLOYMENT_PROJECT_ID=${DEP_PROJECT_ID}" >> $BASH_ENV
-
   auth:
     steps:
       - run:
@@ -54,7 +57,6 @@ commands:
           command: |
             sudo -E /bin/bash ./shell/gcloud_authenticate.sh
             sudo -E /bin/bash ./shell/gcloud-pull-dep-files.sh
-
   install_cloud_sdk:
     steps:
       - run:
@@ -110,7 +112,6 @@ jobs:
     working_directory: ~/BigQueryTableSearch
     docker:
       - image: cimg/python:3.8
-
     steps:
       - restore_cache:
           keys:
