@@ -5,7 +5,7 @@ commands:
       - run:
           name: "Set the Tier"
           command: |
-            TIER=TEST
+            TIER=DEV
             if [[ ${CIRCLE_BRANCH} =~ bq-table-search-(prod|test|uat).* ]]; then
               TIER=$(awk -F- '{print toupper($4)}' \<<< ${CIRCLE_BRANCH})
             fi
