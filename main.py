@@ -18,26 +18,19 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_talisman import Talisman
 import requests
-# import logging
 from google.cloud import bigquery, logging
 from datetime import datetime
 from random import randint
 
 app = Flask(__name__)
-
 TIER = os.environ.get('TIER', 'test')
 app.config['TESTING'] = (TIER.lower() != 'prod')
 app.config['ENV'] = 'production' if TIER.lower() == 'prod' else 'development'
-
-MAX_RESULT_SIZE = 50000
 
 # length of time (in seconds) the browser will respect the HSTS header
 # production and UAT should be set to 31,536,000 seconds (by not setting any HSTS_MAX_age,
 # else set to 3600 (test and dev)
 hsts_max_age = int(os.environ.get('HSTS_MAX_AGE') or 3600)
-
-# length of time (in seconds) the browser will respect the HSTS header
-# hsts_max_age = 31536000 if TIER.lower() == 'prod' or  TIER.lower() == 'uat' else 3600
 
 Talisman(app, strict_transport_security_max_age=hsts_max_age, content_security_policy={
     'default-src': [
@@ -56,12 +49,6 @@ Talisman(app, strict_transport_security_max_age=hsts_max_age, content_security_p
 GOOGLE_APPLICATION_CREDENTIALS = os.path.join(app.root_path, 'privatekey.json')
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS
 logging_client = logging.Client()
-
-bq_filters = None
-bq_metadata_file_last_modified = None
-bq_metadata_file = None
-bq_useful_join_last_modified = None
-bq_useful_join = None
 bq_total_entries = 0
 BQ_ECOSYS_BUCKET = os.environ.get('BQ_ECOSYS_BUCKET',
                                   'https://storage.googleapis.com/webapp-static-files-isb-cgc-dev/bq_ecosys/')
@@ -71,6 +58,20 @@ BQ_METADATA_FILE_NAME = 'bq_meta_data.json'
 BQ_METADATA_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_METADATA_FILE_NAME
 BQ_USEFUL_JOIN_FILE_NAME = 'bq_useful_join.json'
 BQ_USEFUL_JOIN_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_USEFUL_JOIN_FILE_NAME
+
+bq_table_files = {
+    'bq_filters': {'last_modified': None, 'file_path': BQ_FILTER_FILE_PATH,
+                   'file_data': None},
+    'bq_metadata': {'last_modified': None, 'file_path': BQ_METADATA_FILE_PATH,
+                    'file_data': None},
+    'bq_useful_join': {'last_modified': None, 'file_path': BQ_USEFUL_JOIN_FILE_PATH,
+                       'file_data': None}
+}
+
+
+@app.route("/", methods=['POST', 'GET'])
+def home():
+    return redirect(url_for('search', status='current'))
 
 
 @app.route("/faq/")
@@ -88,27 +89,75 @@ def privacy():
     return render_template("privacy.html")
 
 
-@app.route("/", methods=['POST', 'GET'])
-def home():
-    return redirect(url_for('search', status='current'))
-
-
 @app.route("/search", methods=['POST', 'GET'])
 def search(status=None):
+    if not bq_table_files['bq_filters']['file_data']:
+        setup_app()
     selected_filters = {}
     if request.method == 'POST':
         rq_meth = request.form
     else:
         rq_meth = request.args
-
     for f in ['projectId', 'datasetId', 'tableId', 'friendlyName', 'description', 'field_name', 'labels',
               'status', 'category', 'experimental_strategy', 'program', 'source', 'data_type', 'reference_genome']:
         if rq_meth.get(f):
             selected_filters[f] = request.args.get(f).lower()
-    if not bq_filters or bq_metadata_file or bq_useful_join:
-        setup_app()
-    return render_template("bq_meta_search.html", bq_filters=bq_filters, selected_filters=selected_filters,
+    return render_template("bq_meta_search.html", bq_filters=bq_table_files['bq_filters']['file_data'],
+                           selected_filters=selected_filters,
                            bq_total_entries=bq_total_entries)
+
+
+@app.route("/search_api", methods=['GET', 'POST'])
+def search_api():
+    setup_app()
+    filtered_meta_data = []
+    if bq_table_files['bq_metadata']['file_data']:
+        filtered_meta_data = filter_rows(bq_table_files['bq_metadata']['file_data'], request)
+    return jsonify(filtered_meta_data)
+
+
+@app.route("/get_tbl_preview/<proj_id>/<dataset_id>/<table_id>/", methods=['GET', 'POST'])
+def get_tbl_preview(proj_id, dataset_id, table_id):
+    status = 200
+    max_row = 8
+    try:
+        if not proj_id or not dataset_id or not table_id:
+            app.logger.warning("[WARNING] Required ID missing: {}.{}.{}".format(proj_id, dataset_id, table_id))
+            status = 400
+            result = {
+                'message': "One or more required parameters (project id, dataset_id or table_id) were not supplied."
+            }
+        else:
+            client = bigquery.Client(project=proj_id)
+            rows_iter = client.list_rows(f'{proj_id}.{dataset_id}.{table_id}', max_results=max_row)
+            if rows_iter and rows_iter.total_rows:
+                schema_fields = [schema.to_api_repr() for schema in list(rows_iter.schema)]
+                tbl_data = [dict(row) for row in list(rows_iter)]
+                result = {
+                    'tbl_data': tbl_data,
+                    'schema_fields': schema_fields
+                }
+
+            else:
+                status = 204
+                result = {
+                    'message': f'No record has been found for table {proj_id}.{dataset_id}.{table_id}.'
+                }
+
+    except ValueError as e:
+        status = e.response.status_code
+        result = {
+            'message': "ValueError"
+        }
+    except Exception as e:
+        status = e.response.status_code
+        result = {
+            'message': "Exception"
+        }
+    if status != 200:
+        app.logger.error(
+            f"ERROR While attempting to retrieve preview data for {proj_id}.{dataset_id}.{table_id} table: [{status}] {result['message']}")
+    return jsonify(result)
 
 
 @app.errorhandler(404)
@@ -138,10 +187,8 @@ def filter_by_prop(rq_meth, rows, attr_list, sub_category, exact_match_search):
                                             if f_val in field_dict.get(k).lower():
                                                 add_row = True
                                                 break
-
                                 if add_row:
                                     break
-
                         else:
                             for f_val in f_vals.split('|'):
                                 if exact_match_search:
@@ -232,15 +279,6 @@ def filter_rows(rows, req):
     return rows
 
 
-@app.route("/search_api", methods=['GET', 'POST'])
-def search_api():
-    setup_app()
-    filtered_meta_data = []
-    if bq_metadata_file:
-        filtered_meta_data = filter_rows(bq_metadata_file, request)
-    return jsonify(filtered_meta_data)
-
-
 def get_schema_fields(schema_field):
     nested_schema_dic = {}
     if schema_field.fields:
@@ -254,97 +292,34 @@ def get_schema_fields(schema_field):
         return schema_field.name
 
 
-@app.route("/get_tbl_preview/<proj_id>/<dataset_id>/<table_id>/", methods=['GET', 'POST'])
-def get_tbl_preview(proj_id, dataset_id, table_id):
-    status = 200
-    MAX_ROW = 8
-    try:
-        if not proj_id or not dataset_id or not table_id:
-            app.logger.warning("[WARNING] Required ID missing: {}.{}.{}".format(proj_id, dataset_id, table_id))
-            status = 503
-            result = {
-                'message': "There was an error while processing this request: one or more required parameters (project id, dataset_id or table_id) were not supplied."
-            }
-        else:
-            client = bigquery.Client(project=proj_id)
-            rows_iter = client.list_rows(f'{proj_id}.{dataset_id}.{table_id}', max_results=8)
-            if rows_iter and rows_iter.total_rows:
-                schema_fields = [schema.to_api_repr() for schema in list(rows_iter.schema)]
-                tbl_data = [dict(row) for row in list(rows_iter)]
-                result = {
-                    'tbl_data': tbl_data,
-                    'schema_fields': schema_fields
-                }
-
-            else:
-                result = {
-                    'message': 'No record has been found for table {proj_id}.{dataset_id}.{table_id}.'.format(
-                        proj_id=proj_id,
-                        dataset_id=dataset_id,
-                        table_id=table_id)
-                }
-
-    except ValueError as e:
-        app.logger.error(
-            "[ERROR] While attempting to retrieve preview data for {proj_id}.{dataset_id}.{table_id} table:".format(
-                proj_id=proj_id,
-                dataset_id=dataset_id,
-                table_id=table_id))
-        app.logger.exception(e)
-        status = 500
-        result = {
-            'message': "There was an error while processing this request."
-        }
-
-    except Exception as e:
-        status = 503
-        result = {
-            'message': "There was an error while processing this request."
-        }
-        app.logger.error(
-            "[ERROR] While attempting to retrieve preview data for {proj_id}.{dataset_id}.{table_id} table:".format(
-                proj_id=proj_id,
-                dataset_id=dataset_id,
-                table_id=table_id))
-        app.logger.exception(e)
-
-    return jsonify(result)
-
-
 def setup_app():
+    global bq_table_files, bq_total_entries
     status_code = 200
-    global bq_filters, bq_metadata_file_last_modified, bq_metadata_file, bq_useful_join_last_modified, bq_useful_join, bq_total_entries
     try:
-        r = requests.head(BQ_METADATA_FILE_PATH + '?t=' + str(randint(1000, 9999)))
-        r.raise_for_status()
-        curr_metadata_file_last_modified = datetime.strptime(r.headers['Last-Modified'], '%a, %d %b %Y %H:%M:%S GMT')
-        useful_join_updated = False
-        tmp_metadata_file = []
-        if not bq_metadata_file_last_modified or (
-                bq_metadata_file_last_modified and (bq_metadata_file_last_modified < curr_metadata_file_last_modified)):
-            bq_metadata_file_last_modified = curr_metadata_file_last_modified
-            bq_filters = requests.get(BQ_FILTER_FILE_PATH).json()
-            tmp_metadata_file = requests.get(BQ_METADATA_FILE_PATH).json()
-            bq_total_entries = len(tmp_metadata_file) if tmp_metadata_file else 0
-
-        r = requests.head(BQ_USEFUL_JOIN_FILE_PATH)
-        curr_useful_join_file_last_modified = datetime.strptime(r.headers['Last-Modified'], '%a, %d %b %Y %H:%M:%S GMT')
-        if not bq_useful_join_last_modified or (
-                bq_useful_join_last_modified and (bq_useful_join_last_modified < curr_useful_join_file_last_modified)):
-            bq_useful_join_last_modified = curr_useful_join_file_last_modified
-            bq_useful_join = requests.get(BQ_USEFUL_JOIN_FILE_PATH).json()
-            useful_join_updated = True
-        if len(tmp_metadata_file) or useful_join_updated:
-            for bq_meta_data_row in tmp_metadata_file:
+        is_bq_metadata_updated = False
+        is_useful_join_updated = False
+        for f in bq_table_files:
+            r = requests.head(bq_table_files[f]['file_path'] + '?t=' + str(randint(1000, 9999)))
+            r.raise_for_status()
+            file_last_modified = datetime.strptime(r.headers['Last-Modified'], '%a, %d %b %Y %H:%M:%S GMT')
+            if not bq_table_files[f]['file_data'] or \
+                    not bq_table_files[f]['last_modified'] or (
+                    bq_table_files[f]['last_modified'] and (bq_table_files[f]['last_modified'] < file_last_modified)):
+                bq_table_files[f]['last_modified'] = file_last_modified
+                bq_table_files[f]['file_data'] = requests.get(bq_table_files[f]['file_path']).json()
+                is_bq_metadata_updated = (not is_bq_metadata_updated and f == 'bq_metadata')
+                is_useful_join_updated = (not is_useful_join_updated and f == 'bq_useful_join')
+        bq_total_entries = len(bq_table_files['bq_metadata']['file_data']) if bq_table_files['bq_metadata'][
+            'file_data'] else 0
+        if (is_bq_metadata_updated and bq_total_entries) or is_useful_join_updated:
+            for bq_meta_data_row in bq_table_files['bq_metadata']['file_data']:
                 useful_joins = []
                 row_id = bq_meta_data_row['id']
-                for join in bq_useful_join:
+                for join in bq_table_files['bq_useful_join']['file_data']:
                     if join['id'] == row_id:
                         useful_joins = join['joins']
                         break
                 bq_meta_data_row['usefulJoins'] = useful_joins
-            bq_metadata_file = tmp_metadata_file
-
     except requests.exceptions.HTTPError as e:
         error_message = 'HTTPError'
         status_code = e.response.status_code
@@ -356,9 +331,9 @@ def setup_app():
         status_code = e.response.status_code
 
     if status_code != 200:
-        bq_filters = None
-        bq_metadata_file = None
-        bq_useful_join = None
+        bq_table_files['bq_filters']['file_data'] = None
+        bq_table_files['bq_metadata']['file_data'] = None
+        bq_table_files['bq_useful_join']['file_data'] = None
         bq_total_entries = 0
         app.logger.error(f'ERROR While attempting to retrieve BQ metadata file: [{status_code}] {error_message}')
 
@@ -370,4 +345,3 @@ if __name__ == '__main__':
 else:
     logging_client.logger('app_login_log')
     logging_client.setup_logging()
-

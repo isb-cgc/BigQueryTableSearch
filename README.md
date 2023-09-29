@@ -1,2 +1,2 @@
 # BigQueryTableSearch
-Standalone Big Query Table Search System
+Standalone BigQuery Table Search System
