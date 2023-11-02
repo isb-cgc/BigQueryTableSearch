@@ -342,6 +342,6 @@ setup_app()
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
-else:
-    logging_client.logger('app_login_log')
-    logging_client.setup_logging()
+# else:
+#     logging_client.logger('app_login_log')
+#     logging_client.setup_logging()
