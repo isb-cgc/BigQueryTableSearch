@@ -2,8 +2,8 @@
 {% block head %}
 {{ super() }}
 <script>
-    let selected_filters = {{ selected_filters | tojson }};
-    let bq_total_entries = {{ bq_total_entries }};
+    let selected_filters = assign_var({{ selected_filters | tojson }});
+    let bq_total_entries = assign_var({{ bq_total_entries }});
 </script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/bq_meta_search.js') }}"></script>
 
