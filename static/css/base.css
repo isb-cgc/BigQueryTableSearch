@@ -30,12 +30,10 @@ body {
 
 }
 
-main{
-    background-color: var(--bs-body-bg);
-}
+
 
 .main-content{
-    min-height: 80vh;
+    background-color: var(--bs-body-bg);
 }
 
 a {

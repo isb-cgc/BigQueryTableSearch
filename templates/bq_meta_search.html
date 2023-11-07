@@ -12,194 +12,190 @@
 {% block page_name %}bq-meta-searcher{% endblock %}
 
 {% block content %}
-
-
-<div class="container-fluid">
-    <div class="row">
-        {% if bq_filters and bq_total_entries %}
-        <div class="sidebar border border-right custom-width-20 bg-body-tertiary">
-            <div class="offcanvas-md offcanvas-end bg-body-tertiary" tabindex="-1" id="sidebarMenu"
-                 aria-labelledby="sidebarMenuLabel">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" id="sidebarMenuLabel">BigQuery Table Search</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"
-                            data-bs-target="#sidebarMenu" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body d-md-flex flex-column p-2 pt-lg-3">
-                    <form id="bq-meta-form">
-                        <div>
-                            <label class="form-label">Status</label>
-                            <select id="status" class="form-select bq-select" data-column-name="status">
-                                {% for option in bq_filters.status.options %}
-                                <option value="{{ option.value }}">{{ option.label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="form-label">Name</label>
-                            <input type="text" class="form-control bq-filter" data-column-name="friendlyName">
-                        </div>
-                        <div>
-                            <label class="form-label">Program</label>
-                            <select multiple data-placeholder="Choose Programs..."
-                                    class="autocomplete_select_box form-select bq-select"
-                                    data-column-name="program">
-                                {% for option in bq_filters.program.options %}
-                                <option value="{{ option.value }}">{{ option.label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="form-label">Category</label>
-                            {% for option in bq_filters.category.options %}
-                            <div class="ms-3 my-0 py-0 form-check">
-                                <input type="checkbox" class="form-check-input bq-checkbox"
-                                       name="cat_{{ loop.index }}"
-                                       id="cat_chbx_{{ loop.index }}"
-                                       value="{{ option.value }}" data-column-name="category">
-
-                                <label class="label-filter form-check-label"
-                                       for="cat_chbx_{{ loop.index }}">{{ option.label }}
-                                    <i class="fa fa-info-circle" data-placement="bottom"
-                                       title="{{ option.description }}"></i></label>
-                            </div>
+<div class="row">
+    {% if bq_filters and bq_total_entries %}
+    <div class="sidebar border border-right col-lg-2 bg-body-tertiary">
+        <div class="offcanvas-md offcanvas-end bg-body-tertiary" tabindex="-1" id="sidebarMenu"
+             aria-labelledby="sidebarMenuLabel">
+            <div class="offcanvas-header">
+                <div class="offcanvas-title fw-bold fs-6" id="sidebarMenuLabel">BigQuery Table Search</div>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas"
+                        data-bs-target="#sidebarMenu" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body d-md-flex flex-column p-2">
+<!--            <div class="offcanvas-body d-md-flex flex-column p-2 pt-lg-3">-->
+                <form id="bq-meta-form">
+                    <div>
+                        <label class="form-label">Status</label>
+                        <select id="status" class="form-select bq-select" data-column-name="status">
+                            {% for option in bq_filters.status.options %}
+                            <option value="{{ option.value }}">{{ option.label }}</option>
                             {% endfor %}
-                        </div>
-                        <div>
-                            <label class="form-label">Reference Genome</label>
-                            <select class="form-select bq-select" data-column-name="reference_genome">
-                                {% for option in bq_filters.reference_genome.options %}
-                                <option value="{{ option.value }}">{{ option.label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="form-label">Source</label>
-                            <select multiple data-placeholder="Choose Sources..."
-                                    class="autocomplete_select_box form-select bq-select"
-                                    data-column-name="source">
-                                {% for option in bq_filters.source.options %}
-                                <option value="{{ option.value }}">{{ option.label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="form-label">Data Type</label>
-                            <select multiple data-placeholder="Choose Data Types..."
-                                    class="autocomplete_select_box form-select bq-select"
-                                    data-column-name="data_type">
-                                {% for option in bq_filters.data_type.options %}
-                                <option value="{{ option.value }}">{{ option.label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="form-label">Experimental Strategy</label>
-                            <select multiple data-placeholder="Choose Experimental Strategy..."
-                                    class="autocomplete_select_box form-select bq-select"
-                                    data-column-name="experimental_strategy">
-                                {% for option in bq_filters.experimental_strategy.options %}
-                                <option value="{{ option.value }}">{{ option.label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control bq-filter" data-column-name="friendlyName">
+                    </div>
+                    <div>
+                        <label class="form-label">Program</label>
+                        <select multiple data-placeholder="Choose Programs..."
+                                class="autocomplete_select_box form-select bq-select"
+                                data-column-name="program">
+                            {% for option in bq_filters.program.options %}
+                            <option value="{{ option.value }}">{{ option.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Category</label>
+                        {% for option in bq_filters.category.options %}
+                        <div class="ms-3 my-0 py-0 form-check">
+                            <input type="checkbox" class="form-check-input bq-checkbox"
+                                   name="cat_{{ loop.index }}"
+                                   id="cat_chbx_{{ loop.index }}"
+                                   value="{{ option.value }}" data-column-name="category">
 
-                        <div id="advSearch0" class="adv-div collapse">
-                            <div>
-                                <label class="form-label">BQ Project</label>
-                                <select id="search-by-project-id" class="form-select bq-select"
-                                        data-column-name="projectId">
-                                    {% for option in bq_filters.project_id.options %}
-                                    {% if option.value == '' %}
-                                    <option value="{{ option.value }}" selected>{{ option.label }}</option>
-                                    {% else %}
-                                    <option value="{{ option.value }}">{{ option.label }}</option>
-                                    {% endif %}
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div>
-                                <label class="form-label">BQ Dataset</label>
-                                <input type="text" id="search-by-dataset-id" class="form-control bq-filter"
-                                       data-column-name="datasetId">
-                            </div>
-                            <div>
-                                <label class="form-label">BQ Table</label>
-                                <input type="text" id="search-by-table-id" class="form-control bq-filter"
-                                       data-column-name="tableId">
-                            </div>
-                            <div>
-                                <label class="form-label">Table Description</label>
-                                <input type="text" class="form-control bq-filter" data-column-name="description">
-                            </div>
-                            <div>
-                                <label class="form-label">Labels</label>
-                                <input type="text" class="form-control bq-filter" data-column-name="labels">
-                            </div>
-                            <div>
-                                <label class="form-label">Field Name</label>
-                                <input type="text" class="form-control bq-filter" data-column-name="field_name">
-                            </div>
+                            <label class="label-filter form-check-label"
+                                   for="cat_chbx_{{ loop.index }}">{{ option.label }}
+                                <i class="fa fa-info-circle" data-placement="bottom"
+                                   title="{{ option.description }}"></i></label>
                         </div>
-                        <br>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <label class="form-label">Reference Genome</label>
+                        <select class="form-select bq-select" data-column-name="reference_genome">
+                            {% for option in bq_filters.reference_genome.options %}
+                            <option value="{{ option.value }}">{{ option.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Source</label>
+                        <select multiple data-placeholder="Choose Sources..."
+                                class="autocomplete_select_box form-select bq-select"
+                                data-column-name="source">
+                            {% for option in bq_filters.source.options %}
+                            <option value="{{ option.value }}">{{ option.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Data Type</label>
+                        <select multiple data-placeholder="Choose Data Types..."
+                                class="autocomplete_select_box form-select bq-select"
+                                data-column-name="data_type">
+                            {% for option in bq_filters.data_type.options %}
+                            <option value="{{ option.value }}">{{ option.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Experimental Strategy</label>
+                        <select multiple data-placeholder="Choose Experimental Strategy..."
+                                class="autocomplete_select_box form-select bq-select"
+                                data-column-name="experimental_strategy">
+                            {% for option in bq_filters.experimental_strategy.options %}
+                            <option value="{{ option.value }}">{{ option.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div id="advSearch0" class="adv-div collapse">
                         <div>
-                            <button type="button"
-                                    class="btn reset-btn">Reset All Filters
-                            </button>
+                            <label class="form-label">BQ Project</label>
+                            <select id="search-by-project-id" class="form-select bq-select"
+                                    data-column-name="projectId">
+                                {% for option in bq_filters.project_id.options %}
+                                {% if option.value == '' %}
+                                <option value="{{ option.value }}" selected>{{ option.label }}</option>
+                                {% else %}
+                                <option value="{{ option.value }}">{{ option.label }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
                         </div>
                         <div>
-                            <button id="show-btn" type="button" data-bs-target="#advSearch0"
-                                    data-bs-toggle="collapse"
-                                    aria-expanded="false" aria-controls="advSearch0"
-                                    class="btn collapsed">Show
-                            </button>
+                            <label class="form-label">BQ Dataset</label>
+                            <input type="text" id="search-by-dataset-id" class="form-control bq-filter"
+                                   data-column-name="datasetId">
                         </div>
-                    </form>
-                </div>
+                        <div>
+                            <label class="form-label">BQ Table</label>
+                            <input type="text" id="search-by-table-id" class="form-control bq-filter"
+                                   data-column-name="tableId">
+                        </div>
+                        <div>
+                            <label class="form-label">Table Description</label>
+                            <input type="text" class="form-control bq-filter" data-column-name="description">
+                        </div>
+                        <div>
+                            <label class="form-label">Labels</label>
+                            <input type="text" class="form-control bq-filter" data-column-name="labels">
+                        </div>
+                        <div>
+                            <label class="form-label">Field Name</label>
+                            <input type="text" class="form-control bq-filter" data-column-name="field_name">
+                        </div>
+                    </div>
+                    <br>
+                    <div>
+                        <button type="button"
+                                class="btn reset-btn">Reset All Filters
+                        </button>
+                    </div>
+                    <div>
+                        <button id="show-btn" type="button" data-bs-target="#advSearch0"
+                                data-bs-toggle="collapse"
+                                aria-expanded="false" aria-controls="advSearch0"
+                                class="btn collapsed">Show
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-        <div class="custom-width-80 px-3 py-4">
-            <table id="bqmeta" class="table table-striped pt-2" style="width:100%">
-                <thead>
-                <tr>
-                    <th style="width:3%;"></th>
-                    <th style="width:17%;">Name</th>
-                    {#
-                    <th></th>
-                    #}
-                    <th style="width:15%;">BQ Project</th>
-                    <th style="width:15%;">BQ Dataset</th>
-                    <th style="width:15%;">BQ Table</th>
-                    <th>Full ID</th>
-                    <th style="width:8%;">Program</th>
-                    <th style="width:8%;">Category</th>
-                    <th>Reference Genome</th>
-                    <th>Source</th>
-                    <th>Data Type</th>
-                    <th title="Experimental Strategy">Exp. Strategy</th>
-
-                    <th style="width:9%;">Status</th>
-                    <th style="width:8%;">Rows</th>
-                    <th style="width:8%;">Created</th>
-                    <th style="width:8%;">Example Joins</th>
-                    <th style="width:7%;">Preview</th>
-                    <th style="width:7%;">Description</th>
-                    <th>Labels</th>
-                    <th>Fields</th>
-                    <th style="width:3%;">Open</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="text-center my-5 py-5">
-            <div class="error-code-msg mb-3"><i class="fas fa-exclamation-triangle"></i> Unable to Load Data</div>
-            <div class="fw-bold fs-4">Sorry, an error has occurred - Please try again later.</div>
-        </div>
-        {% endif %}
-
     </div>
+    <div class="col-lg-10 px-3 py-4">
+        <table id="bqmeta" class="table table-striped pt-2" style="width:100%">
+            <thead>
+            <tr>
+                <th style="width:3%;"></th>
+                <th style="width:17%;">Name</th>
+                {#
+                <th></th>
+                #}
+                <th style="width:15%;">BQ Project</th>
+                <th style="width:15%;">BQ Dataset</th>
+                <th style="width:15%;">BQ Table</th>
+                <th>Full ID</th>
+                <th style="width:8%;">Program</th>
+                <th style="width:8%;">Category</th>
+                <th>Reference Genome</th>
+                <th>Source</th>
+                <th>Data Type</th>
+                <th title="Experimental Strategy">Exp. Strategy</th>
+
+                <th style="width:9%;">Status</th>
+                <th style="width:8%;">Rows</th>
+                <th style="width:8%;">Created</th>
+                <th style="width:8%;">Example Joins</th>
+                <th style="width:7%;">Preview</th>
+                <th style="width:7%;">Description</th>
+                <th>Labels</th>
+                <th>Fields</th>
+                <th style="width:3%;">Open</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center my-5 py-5">
+        <div class="error-code-msg mb-3"><i class="fas fa-exclamation-triangle"></i> Unable to Load Data</div>
+        <div class="fw-bold fs-4">Sorry, an error has occurred - Please try again later.</div>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Useful Join Modal -->
