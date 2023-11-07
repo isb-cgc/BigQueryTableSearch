@@ -28,7 +28,7 @@
 
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <!--https://datatables.net/download/#bs5-5.3.0/pdfmake-0.2.7/dt-1.13.6/b-2.4.2/b-colvis-2.4.2/b-html5-2.4.2-->
-<!--    <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/dataTables.min.css') }}"/>-->
+    <!--    <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/dataTables.min.css') }}"/>-->
     <!--for SQL markup-->
     <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/prism.css') }}"/>
 
@@ -62,10 +62,9 @@
             <span class="fs-5 fw-bold">BigQuery Table Search</span>
         </a>
         <ul class="nav col-md-4 justify-content-end pe-3">
-            <div class="dropdown">
+            <li class="nav-item dropdown">
                 <a type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
                    data-bs-offset="10,20">
-                    <!--            <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-offset="10,20">-->
                     Resources
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
@@ -81,62 +80,46 @@
                            target="_blank"
                            rel="noreferrer">What is BigQuery?</a></li>
                 </ul>
-            </div>
+            </li>
             <li class="nav-item">
                 <a href="/faq/" class="nav-link px-2">FAQs</a>
             </li>
             <li class="nav-item">
                 <a href="/about/" class="nav-link px-2">About</a>
             </li>
+            <li class="nav-item d-md-none">
+                <a type="button" class="nav-link px-2" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"
+                        aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fas fa-sliders-h"></i>
+                </a>
+            </li>
         </ul>
-<!--        <ul class="navbar-nav flex-row d-md-none">-->
-<!--            <li class="nav-item text-nowrap">-->
-<!--                <button class="nav-link px-3 text-white" type="button" data-bs-toggle="collapse"-->
-<!--                        data-bs-target="#navbarSearch" aria-controls="navbarSearch" aria-expanded="false"-->
-<!--                        aria-label="Toggle search">-->
-<!--                    <svg class="bi">-->
-<!--                        <use xlink:href="#search"></use>-->
-<!--                    </svg>-->
-<!--                </button>-->
-<!--            </li>-->
-<!--            <li class="nav-item text-nowrap">-->
-<!--                <button class="nav-link px-3 text-white" type="button" data-bs-toggle="offcanvas"-->
-<!--                        data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false"-->
-<!--                        aria-label="Toggle navigation">-->
-<!--                    <svg class="bi">-->
-<!--                        <use xlink:href="#list"></use>-->
-<!--                    </svg>-->
-<!--                </button>-->
-<!--            </li>-->
-<!--        </ul>-->
     </div>
 </header>
-<main id="{% block page_name %}content{% endblock %}" class="main-content">
-    {% block content %}
-    {% endblock %}
-</main>
+<div class="container-fluid main-content">
+    <main id="{% block page_name %}content{% endblock %}" >
+        {% block content %}
+        {% endblock %}
+    </main>
+</div>
+<div class="container-fluid bq-bg-light">
+    <footer class="d-flex flex-wrap justify-content-between align-items-center py-3">
+        <p class="col-md-4 mb-0">©2023, <a target="_blank" href="https://isb-cgc.org/">ISB-CGC</a></p>
 
-<footer class="py-2 text-center bq-bg-light">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-2 text-start">©2023, ISB-CGC</div>
-            <div class="col-lg-8">
-                <div class="mb-3">
-                    <a href="/privacy/" target="_blank" rel="noreferrer" class="sr-set">
-                        Privacy Policy<span class="sr-only"> opens a new tab</span></a>
-                    |
-                    <a href="https://www.hhs.gov/vulnerability-disclosure-policy/index.html" target="_blank"
-                       rel="noopener noreferrer" class="sr-set">HHS Vulnerability Disclosure<span class="sr-only"> opens a new tab</span></a>
-                </div>
-                <div>
-                    <a href="#">Back to top</a>
-                </div>
-            </div>
-
-            <div class="col-lg-2"></div>
+        <div href="/"
+             class="col-md-4 d-flex align-items-center justify-content-center mb-3 mb-md-0 me-md-auto">
+            <a href="/privacy/" target="_blank" rel="noreferrer" class="sr-set pe-2">
+                Privacy Policy<span class="sr-only"> opens a new tab</span></a>
+            |
+            <a href="https://www.hhs.gov/vulnerability-disclosure-policy/index.html" target="_blank"
+               rel="noopener noreferrer" class="sr-set ps-2">HHS Vulnerability Disclosure<span class="sr-only"> opens a new tab</span></a>
         </div>
-    </div>
-</footer>
+
+        <div class="nav col-md-4 justify-content-end">
+            <a href="#">Back to top</a>
+        </div>
+    </footer>
+</div>
 </body>
 
 </html>

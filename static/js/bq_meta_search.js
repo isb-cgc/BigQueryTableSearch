@@ -18,17 +18,12 @@
 
 $(document).ready(function () {
     let query_param_url = set_filters();
-    // $.fn.dataTable.ext.errMode = 'throw';
-    // $.fn.dataTable.ext.errMode = 'throw';
     let table = $('#bqmeta').DataTable({
         dom: 'lfBrtip',
         ajax: {
             method: 'GET',
             url: '/search_api' + query_param_url,
             dataSrc: '',
-            // error: function(){
-            //
-            // }
         },
         buttons: [
             {
@@ -303,6 +298,7 @@ $(document).ready(function () {
             "infoFiltered": ""
         },
         initComplete: function (settings, json) {
+            $('.dt-buttons').removeClass('btn-group');
             window.history.pushState(null, 'BigQuery Table Search', query_param_url);
         },
         drawCallback: function (settings) {
