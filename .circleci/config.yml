@@ -24,6 +24,7 @@ commands:
               KEY="NA"
             fi
             CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_BQ_TABLE_SEARCH_DEV}
+
             if [[ ${TIER} == "PROD" ]]; then
               KEY=${DEPLOYMENT_KEY_BQ_TABLE_SEARCH_PROD}
               CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_BQ_TABLE_SEARCH_PROD}
@@ -96,7 +97,6 @@ jobs:
           name: Compare Config
           command: |
             sudo -E /bin/bash ./shell/compareConfig.sh "gs://${DEPLOYMENT_BUCKET}/bqs_deployment_config.txt"
-            sudo -E /bin/bash ./shell/compareConfig.sh "gs://${DEPLOYMENT_BUCKET}/bqs_app.yaml"
       - save_cache:
           key: bq-table-search-{{ epoch }}
           paths:
