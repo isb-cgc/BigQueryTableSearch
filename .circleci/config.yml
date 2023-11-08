@@ -24,7 +24,6 @@ commands:
               KEY="NA"
             fi
             CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_BQ_TABLE_SEARCH_DEV}
-
             if [[ ${TIER} == "PROD" ]]; then
               KEY=${DEPLOYMENT_KEY_BQ_TABLE_SEARCH_PROD}
               CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_BQ_TABLE_SEARCH_PROD}
@@ -32,12 +31,12 @@ commands:
               DEP_PROJECT_ID=${DEPLOYMENT_PROJECT_ID_PROD}
             elif [[ ${TIER} == "UAT" ]]; then
               KEY=${DEPLOYMENT_KEY_UAT}
-              CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_BQ_TABLE_SEARCH_UAT}
+              CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_UAT}
               DEP_BUCKET=${DEPLOYMENT_KEY_BQ_TABLE_SEARCH_UAT}
               DEP_PROJECT_ID=${DEPLOYMENT_PROJECT_ID_UAT}
             elif [[ ${TIER} == "TEST" ]]; then
               KEY=${DEPLOYMENT_KEY_BQ_TABLE_SEARCH_TEST}
-              CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_BQ_TABLE_SEARCH_TEST}
+              CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_TEST}
               DEP_BUCKET=${DEPLOYMENT_BUCKET_TEST}
               DEP_PROJECT_ID=${DEPLOYMENT_PROJECT_ID_TEST}
             elif [[ ${TIER} == "DEV" ]]; then
@@ -57,13 +56,14 @@ commands:
           command: |
             sudo -E /bin/bash ./shell/gcloud_authenticate.sh
             sudo -E /bin/bash ./shell/gcloud-pull-dep-files.sh
+            xargs -a deployment_config.txt -I{} echo "export {}" >> $BASH_ENV
   install_cloud_sdk:
     steps:
       - run:
           name: "Install CloudSDK"
           command: |
             echo "export CLOUDSDK_CORE_DISABLE_PROMPTS=1" >> $BASH_ENV
-            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
             curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
             sudo apt-get update && sudo apt-get -y install google-cloud-sdk
 
@@ -73,7 +73,7 @@ jobs:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
     working_directory: ~/BigQueryTableSearch
     docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:3.12
     steps:
       - checkout
       - run:
@@ -95,7 +95,7 @@ jobs:
       - run:
           name: Compare Config
           command: |
-            sudo -E /bin/bash ./shell/compareConfig.sh "gs://${DEPLOYMENT_BUCKET}/${CONFIG_FILE}"
+            sudo -E /bin/bash ./shell/compareConfig.sh "gs://${DEPLOYMENT_BUCKET}/bqs_deployment_config.txt"
       - save_cache:
           key: bq-table-search-{{ epoch }}
           paths:
@@ -115,7 +115,7 @@ jobs:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
     working_directory: ~/BigQueryTableSearch
     docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:3.12
     steps:
       - restore_cache:
           keys:
@@ -126,7 +126,7 @@ jobs:
       - run:
           command: |
             sudo -E rm -rf ./lib
-            sudo -E gcloud app deploy --verbosity=debug ./app.yaml --quiet
+            sudo -E gcloud app deploy --verbosity=debug ./app.yaml --service-account=${WEB_RUNTIME_SA_NAME} --quiet
 workflows:
   version: 2
   build_and_deploy:
