@@ -14,16 +14,17 @@
 {% block content %}
 <div class="row">
     {% if bq_filters and bq_total_entries %}
-    <div class="sidebar border border-right col-lg-2 bg-body-tertiary">
-        <div class="offcanvas-md offcanvas-end bg-body-tertiary" tabindex="-1" id="sidebarMenu"
+    <div class="border border-right col-lg-2 bg-body-tertiary">
+        <div class="offcanvas-lg offcanvas-end bg-body-tertiary" tabindex="-1" id="sidebarMenu"
              aria-labelledby="sidebarMenuLabel">
             <div class="offcanvas-header">
-                <div class="offcanvas-title fw-bold fs-6" id="sidebarMenuLabel">BigQuery Table Search</div>
+                <div class="offcanvas-title fw-bold fs-6" id="sidebarMenuLabel"></div>
+<!--                <div class="offcanvas-title fw-bold fs-6" id="sidebarMenuLabel">BigQuery Table Search</div>-->
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas"
                         data-bs-target="#sidebarMenu" aria-label="Close"></button>
             </div>
-            <div class="offcanvas-body d-md-flex flex-column p-2">
-<!--            <div class="offcanvas-body d-md-flex flex-column p-2 pt-lg-3">-->
+<!--            <div class="offcanvas-body d-lg-flex flex-column p-2">-->
+            <div class="offcanvas-body d-lg-flex flex-column p-2">
                 <form id="bq-meta-form">
                     <div>
                         <label class="form-label">Status</label>
