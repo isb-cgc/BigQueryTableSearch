@@ -51,17 +51,17 @@
 <body id="body">
 <header class="fixed-top">
     <div class="bq-bg-dark px-0 py-1">
-        <a target="_blank" href="https://isb-cgc.org/" class="px-3 d-flex align-items-center col-md-3 col-lg-2">
+        <a target="_blank" href="https://isb-cgc.org/" class="px-3 d-flex align-items-center col-lg-2">
             <img class="me-2" src="{{ url_for('static', filename='img/isb-cgc-primary-reverse.png') }}" width="21px"
                  alt="ISB-CGC logo">
             <span class="fs-7 fw-bold">ISB-CGC</span>
         </a>
     </div>
     <div class="navbar bq-bg-light p-0 shadow flex-md-nowrap">
-        <a href="/" class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 d-flex align-items-center">
+        <a href="/" class="navbar-brand me-0 ps-3 fs-6 d-flex align-items-center">
             <span class="fs-5 fw-bold">BigQuery Table Search</span>
         </a>
-        <ul class="nav col-md-4 justify-content-end pe-3">
+        <ul class="nav justify-content-end pe-3">
             <li class="nav-item dropdown">
                 <a type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
                    data-bs-offset="10,20">
@@ -87,12 +87,14 @@
             <li class="nav-item">
                 <a href="/about/" class="nav-link px-2">About</a>
             </li>
-            <li class="nav-item d-md-none">
+            {% if request.url_rule.endpoint == "search" %}
+            <li class="nav-item d-lg-none">
                 <a type="button" class="nav-link px-2" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"
                         aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
                     <i class="fas fa-sliders-h"></i>
                 </a>
             </li>
+            {% endif %}
         </ul>
     </div>
 </header>
@@ -103,19 +105,19 @@
     </main>
 </div>
 <div class="container-fluid bq-bg-light">
-    <footer class="d-flex flex-wrap justify-content-between align-items-center py-3">
-        <p class="col-md-4 mb-0">©2023, <a target="_blank" href="https://isb-cgc.org/">ISB-CGC</a></p>
+    <footer class="d-flex flex-wrap justify-content-between align-items-center py-4">
+        <div class="col-lg-4 p-2">©2023, <a target="_blank" href="https://isb-cgc.org/">ISB-CGC</a></div>
 
         <div href="/"
-             class="col-md-4 d-flex align-items-center justify-content-center mb-3 mb-md-0 me-md-auto">
-            <a href="/privacy/" target="_blank" rel="noreferrer" class="sr-set pe-2">
+             class="col-lg-4 d-flex align-items-center justify-content-center p-2">
+            <a href="/privacy/" target="_blank" rel="noreferrer" class="sr-set px-2">
                 Privacy Policy<span class="sr-only"> opens a new tab</span></a>
             |
             <a href="https://www.hhs.gov/vulnerability-disclosure-policy/index.html" target="_blank"
-               rel="noopener noreferrer" class="sr-set ps-2">HHS Vulnerability Disclosure<span class="sr-only"> opens a new tab</span></a>
+               rel="noopener noreferrer" class="sr-set px-2">HHS Vulnerability Disclosure<span class="sr-only"> opens a new tab</span></a>
         </div>
 
-        <div class="nav col-md-4 justify-content-end">
+        <div class="p-2 nav col-lg-4 justify-content-end">
             <a href="#">Back to top</a>
         </div>
     </footer>
