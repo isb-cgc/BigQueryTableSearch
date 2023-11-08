@@ -30,8 +30,8 @@ commands:
               DEP_BUCKET=${DEPLOYMENT_BUCKET_PROD}
               DEP_PROJECT_ID=${DEPLOYMENT_PROJECT_ID_PROD}
             elif [[ ${TIER} == "UAT" ]]; then
-              KEY=${DEPLOYMENT_KEY_BQ_TABLE_SEARCH_UAT}
-              CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_BQ_TABLE_SEARCH_UAT}
+              KEY=${DEPLOYMENT_KEY_UAT}
+              CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_UAT}
               DEP_BUCKET=${DEPLOYMENT_BUCKET_UAT}
               DEP_PROJECT_ID=${DEPLOYMENT_PROJECT_ID_UAT}
             elif [[ ${TIER} == "TEST" ]]; then
@@ -127,7 +127,7 @@ jobs:
       - run:
           command: |
             sudo -E rm -rf ./lib
-            sudo -E gcloud app deploy --verbosity=debug ./app.yaml --service-account=${WEB_RUNTIME_SA_NAME} --quiet
+            sudo -E gcloud app deploy --verbosity=debug ./app.yaml --quiet
 workflows:
   version: 2
   build_and_deploy:
