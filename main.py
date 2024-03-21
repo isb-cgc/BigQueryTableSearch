@@ -21,6 +21,8 @@ import requests
 from google.cloud import bigquery, logging
 from datetime import datetime
 from random import randint
+import re
+
 
 app = Flask(__name__)
 TIER = os.environ.get('TIER', 'test')
@@ -165,6 +167,15 @@ def page_not_found(e):
     return render_template('404.html'), 404
 
 
+def is_quoted(field_val):
+    if len(field_val):
+        single_quotes = re.fullmatch(r"^\'.*\'$", field_val)
+        double_quotes = re.fullmatch(r'^\".*\"$', field_val)
+        return single_quotes or double_quotes
+    else:
+        return False
+
+
 def filter_by_prop(rq_meth, rows, attr_list, sub_category, exact_match_search):
     for attr in attr_list:
         f_vals = rq_meth.get(attr, '').strip().lower()
@@ -191,6 +202,9 @@ def filter_by_prop(rq_meth, rows, attr_list, sub_category, exact_match_search):
                                     break
                         else:
                             for f_val in f_vals.split('|'):
+                                if is_quoted(f_val):
+                                    f_val = f_val[1:len(f_val) - 1]
+                                    exact_match_search = True
                                 if exact_match_search:
                                     if field_dict.get(attr).lower() == f_val:
                                         add_row = True
