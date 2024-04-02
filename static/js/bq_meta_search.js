@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 2023, Institute for Systems Biology
+ * Copyright 2024, Institute for Systems Biology
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -513,7 +513,10 @@ let set_filters = function () {
     for (const f in selected_filters) {
         if (select_filters.includes(f)) {
             $("select[data-column-name='" + f + "'] option").each(function () {
-                for (const v of selected_filters[f].split('|')) {
+                for (let v of selected_filters[f].split('|')) {
+                    if (is_quoted(v)){
+                        v = v.slice(1,-1);
+                    }
                     if ($(this).val() === v) {
                         $(this).prop('selected', true);
                         break;
@@ -537,6 +540,15 @@ let set_filters = function () {
     return query_param_url
 }
 
+let is_quoted = function(fieldVal) {
+    if (fieldVal.length) {
+        let singleQuotes = /^\'.*\'$/g.test(fieldVal);
+        let doubleQuotes = /^\".*\"$/g.test(fieldVal);
+        return singleQuotes | doubleQuotes;
+    } else {
+        return false;
+    }
+};
 
 let show_tbl_preview = function (row, tr, td, err_mssg) {
     if (err_mssg) {
