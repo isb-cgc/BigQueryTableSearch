@@ -190,11 +190,15 @@ def filter_by_prop(rq_meth, rows, attr_list, sub_category, exact_match_search):
                             for k in field_dict.keys():
                                 for f_val in f_vals.split('|'):
                                     if k.startswith(attr):
+                                        if is_quoted(f_val):
+                                            f_val = f_val[1:len(f_val) - 1]
                                         if exact_match_search:
                                             if field_dict.get(k).lower() == f_val:
                                                 add_row = True
                                                 break
                                         else:
+                                            if is_quoted(f_val):
+                                                f_val = f_val[1:len(f_val) - 1]
                                             if f_val in field_dict.get(k).lower():
                                                 add_row = True
                                                 break
@@ -215,6 +219,8 @@ def filter_by_prop(rq_meth, rows, attr_list, sub_category, exact_match_search):
                                         break
                 else:
                     for f_val in f_vals.split('|'):
+                        if is_quoted(f_val):
+                            f_val = f_val[1:len(f_val) - 1]
                         if exact_match_search:
                             add_row = (row.get(attr).lower() == f_val)
                         else:
