@@ -1,2 +1,2 @@
-gsutil cp "gs://${DEPLOYMENT_BUCKET}/${WEBAPP_RUNTIME_SA_KEY}" ./privatekey.json
-gsutil cp "gs://${DEPLOYMENT_BUCKET}/${CONFIG_FILE}" ./app.yaml
+gsutil cp "gs://${DEPLOYMENT_BUCKET}/bqs_app.yaml" ./app.yaml
+gsutil cp "gs://${DEPLOYMENT_BUCKET}/bqs_deployment_config.txt" ./deployment_config.txt
