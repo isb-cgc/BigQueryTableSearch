@@ -48,8 +48,8 @@ Talisman(app, strict_transport_security_max_age=hsts_max_age, content_security_p
     ]
 })
 
-GOOGLE_APPLICATION_CREDENTIALS = os.path.join(app.root_path, 'privatekey.json')
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS
+if os.environ.get('IS_GAE_DEPLOYMENT', 'False') != 'True':
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(app.root_path, 'privatekey.json')
 logging_client = logging.Client()
 bq_total_entries = 0
 BQ_ECOSYS_BUCKET = os.environ.get('BQ_ECOSYS_BUCKET',
