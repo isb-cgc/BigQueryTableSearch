@@ -95,7 +95,7 @@ jobs:
       - run:
           name: Compare Config
           command: |
-            sudo -E /bin/bash ./shell/compareConfig.sh "gs://${DEPLOYMENT_BUCKET}/${CONFIG_FILE}"
+            sudo -E /bin/bash ./shell/compareConfig.sh "gs://${DEPLOYMENT_BUCKET}/bqs_deployment_config.txt"
       - save_cache:
           key: bq-table-search-{{ epoch }}
           paths:
