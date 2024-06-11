@@ -1,5 +1,5 @@
 Flask==3.0.2
-gunicorn==21.2.0
+gunicorn==22.0.0
 google-cloud-bigquery==3.19.0
 flask-talisman==1.1.0
 oauth2client==4.1.3
