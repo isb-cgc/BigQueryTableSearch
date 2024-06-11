@@ -550,6 +550,10 @@ tr.useful-join-shown .bqmeta-outline-badge {
     /*--bs-pagination-font-size: .9rem;*/
 }
 
+.form-label{
+    font-weight: bold;
+}
+
 .error-code-banner{
     font-size: 7em;
     font-weight: bold;
