@@ -76,9 +76,9 @@ def home():
     return redirect(url_for('search', status='current'))
 
 
-@app.route("/faq/")
-def faq():
-    return render_template("faq.html")
+# @app.route("/faq/")
+# def faq():
+#     return render_template("faq.html")
 
 
 @app.route("/about/")
