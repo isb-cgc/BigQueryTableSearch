@@ -193,6 +193,18 @@ $(document).ready(function () {
                 'searchable': false
             },
             {
+                'className': 'colvis-toggle',
+                'name': 'releases',
+                'data': 'versions',
+                'render': function (data) {
+                    let num_vers = Object.keys(data).length;
+                    let display = num_vers == 0 ? '' :
+                        '<div class="text-center"><a title="View list of released versions" class="view-versions badge rounded-pill bqmeta-outline-badge">' + num_vers + '</a></div>';
+                    return display;
+                },
+                'searchable': false
+            },
+            {
                 'className': 'useful-join-detail colvis-toggle',
                 'name': 'usefulJoins',
                 'data': function (data) {
@@ -416,6 +428,19 @@ $(document).ready(function () {
         }
     });
 
+    $('#bqmeta').find('tbody').on('click', 'td .view-versions', function () {
+        let td = $(this).closest('td');
+        let tr = $(this).closest('tr');
+        let row = table.row(tr);
+        if (row.child.isShown() && tr.hasClass('versions-shown')) {
+            // This row is already open - close it
+            row.child.hide();
+            tr.removeClass('shown versions-shown');
+        } else {
+            show_tbl_versions(row, tr, table.cell(td).data());
+        }
+    });
+
     $('#bqmeta').find('tbody').on('click', 'td .useful-join-detail', function () {
         let tr = $(this).closest('tr');
         let td = $(this).closest('td');
@@ -441,7 +466,7 @@ $(document).ready(function () {
                 let tables = '';
                 join_data['tables'].forEach(function (value, i) {
                     let joinedTableRefs = get_joined_table_refs(value);
-                    tables += ('<li><a class="joined-table-link" href="' + joinedTableRefs['table_url'] + '" title="Open in new tab">' + joinedTableRefs['formatted_id'] + '</a></li>');
+                    tables += ('<li><a class="table-link" href="' + joinedTableRefs['table_url'] + '" title="Open in new tab">' + joinedTableRefs['formatted_id'] + '</a></li>');
                 });
                 let sql_query = join_data['sql'].replace('\n', '\n<br>');
                 let dialog_content =
@@ -471,6 +496,7 @@ $(document).ready(function () {
             tr.addClass('shown useful-join-shown');
             tr.removeClass('preview-shown');
             tr.removeClass('details-shown');
+            tr.removeClass('versions-shown');
         }
     });
 
@@ -492,6 +518,7 @@ $(document).ready(function () {
             tr.addClass('shown details-shown');
             tr.removeClass('preview-shown');
             tr.removeClass('useful-join-shown');
+            tr.removeClass('versions-shown');
         }
     });
 
@@ -514,8 +541,8 @@ let set_filters = function () {
         if (select_filters.includes(f)) {
             $("select[data-column-name='" + f + "'] option").each(function () {
                 for (let v of selected_filters[f].split('|')) {
-                    if (is_quoted(v)){
-                        v = v.slice(1,-1);
+                    if (is_quoted(v)) {
+                        v = v.slice(1, -1);
                     }
                     if ($(this).val() === v) {
                         $(this).prop('selected', true);
@@ -540,7 +567,7 @@ let set_filters = function () {
     return query_param_url
 }
 
-let is_quoted = function(fieldVal) {
+let is_quoted = function (fieldVal) {
     if (fieldVal.length) {
         let singleQuotes = /^\'.*\'$/g.test(fieldVal);
         let doubleQuotes = /^\".*\"$/g.test(fieldVal);
@@ -548,6 +575,15 @@ let is_quoted = function(fieldVal) {
     } else {
         return false;
     }
+};
+
+
+let show_tbl_versions = function (row, tr, data) {
+    row.child(format_tbl_versions(data)).show();
+    tr.removeClass('details-shown');
+    tr.removeClass('useful-join-shown');
+    tr.removeClass('preview-shown');
+    tr.addClass('shown versions-shown');
 };
 
 let show_tbl_preview = function (row, tr, td, err_mssg) {
@@ -559,6 +595,8 @@ let show_tbl_preview = function (row, tr, td, err_mssg) {
     }
     tr.removeClass('details-shown');
     tr.removeClass('useful-join-shown');
+    tr.removeClass('versions-shown');
+
     td.find('.preview-loading').hide();
     tr.addClass('shown preview-shown');
 };
@@ -582,7 +620,7 @@ let format_useful_join_details = function (d) {
         let tables = [];
         join_info['tables'].forEach(function (value, i) {
             let joinedTableRefs = get_joined_table_refs(value);
-            tables.push('<div><a class="joined-table-link" href="' + joinedTableRefs['table_url'] + '" title="Open in new tab">' + joinedTableRefs['formatted_id'] + '</a></div>');
+            tables.push('<div><a class="table-link" href="' + joinedTableRefs['table_url'] + '" title="Open in new tab">' + joinedTableRefs['formatted_id'] + '</a></div>');
         });
         join_table += '<tr>' +
             '<td>' + join_info['title'] + '</td>' +
@@ -618,7 +656,6 @@ let format_tbl_details = function (d) {
         'COPY' +
         '</button>' +
         '<button data-gcpurl="' + format_bq_gcp_console_link(d.tableReference) + '" class="open-gcp-btn" style="margin-left: 0;" title="Open in Google Cloud Console">' +
-        // '<img height="10" src="/static/img/bq-logo.jpeg">' +
         '<svg id="BIGQUERY_SECTION_cache12" fill="none" fill-rule="evenodd" height="11" viewBox="0 0 32 32" width="11" xmlns="http://www.w3.org/2000/svg" fit="" preserveAspectRatio="xMidYMid meet" focusable="false">' +
         '<path d="M8.627 14.358v3.69c.58.998 1.4 1.834 2.382 2.435v-6.125H8.62z" fill="#19424e"></path>' +
         '<path d="M13.044 10.972v10.54c.493.073.998.12 1.516.12.473 0 .934-.042 1.386-.104V10.972h-2.902z" fill="#3A79B8"></path>' +
@@ -629,14 +666,10 @@ let format_tbl_details = function (d) {
 
         '</td>' +
         '</tr><tr>' +
-        // '<td style="vertical-align:top;"><strong>Type</strong></td>' +
-        // '<td>' + d.type.toLowerCase()+ '</td>' +
-        // '</tr><tr>' +
         '<td style="vertical-align:top;"><strong>Dataset ID</strong></td>' +
         '<td>' + d.tableReference.datasetId + '</td>' +
         '</tr><tr>' +
         '<td style="vertical-align:top;"><strong>Table ID</strong></td>' +
-        // '<td style="vertical-align:top;"><strong>'+( d.type.toLowerCase() === 'table'? 'Table': 'View')+' ID</strong></td>' +
         '<td>' + d.tableReference.tableId + '</td>' +
         '</tr><tr>' +
         '<td style="vertical-align:top;"><strong>Description</strong></td>' +
@@ -660,6 +693,25 @@ let copy_to_clipboard = function (el) {
     navigator.clipboard.writeText(el.text());
 };
 
+let format_tbl_versions = function (versions_data) {
+
+    let html_tbl = '<div><table class="versions-table">';
+    html_tbl += '<tr><th class="px-2">Version</th><th class="px-2">Table</th><th></th></tr>';
+    for (let d of Object.keys(versions_data).sort().reverse()) {
+        html_tbl += '<tr><td class="px-2">' + d + (versions_data[d].latest ? "<span class='ms-2 badge rounded-pill bg-secondary'>Latest</span>" : "");
+        html_tbl += '</td><td class="px-2">';
+        let table_link_list = [];
+
+        for (let t of versions_data[d].tables) {
+            let refs = get_joined_table_refs(t)
+            table_link_list.push('<a class="table-link" rel="noreferrer" target="_blank" href="' + refs.table_url + '">' + refs.formatted_id + '</a>');
+        }
+        html_tbl += table_link_list.join('<br/>');
+        html_tbl += '</td></tr>';
+    }
+    html_tbl += '</table></div>';
+    return html_tbl;
+};
 
 let format_tbl_preview = function (schema_fields, rows) {
     let html_tbl = '<div class="preview-table-container"><table class="preview-table">';

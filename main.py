@@ -312,7 +312,76 @@ def get_schema_fields(schema_field):
         return schema_field.name
 
 
+versions_data = {
+    "isb-cgc-bq:GDC_case_file_metadata.aliquot2caseIDmap": {
+        "R40": {
+            "tables": ["isb-cgc-bq:GDC_case_file_metadata.aliquot2caseIDmap_current",
+                       "isb-cgc-bq:GDC_case_file_metadata_versioned.aliquot2caseIDmap_r40"],
+            "latest": True
+
+        },
+        "R28": {
+            "tables": ["isb-cgc-bq:GDC_case_file_metadata_versioned.aliquot2caseIDmap_r28"],
+            "latest": False
+
+        },
+        "R27": {
+            "tables": ["isb-cgc-bq:GDC_case_file_metadata_versioned.aliquot2caseIDmap_r27"],
+            "latest": False
+
+        },
+        "R29": {
+            "tables": ["isb-cgc-bq:GDC_case_file_metadata_versioned.aliquot2caseIDmap_r29"],
+            "latest": False
+
+        },
+        "R26": {
+            "tables": ["isb-cgc-bq:GDC_case_file_metadata_versioned.aliquot2caseIDmap_r26"],
+            "latest": False
+
+        },
+        "R25": {
+            "tables":
+                ["isb-cgc-bq:GDC_case_file_metadata_versioned.aliquot2caseIDmap_r25"],
+            "latest":
+                False
+
+        },
+        "R24": {
+            "tables":
+                ["isb-cgc-bq:GDC_case_file_metadata_versioned.aliquot2caseIDmap_r24"],
+            "latest":
+                False
+
+        },
+        "R23": {
+            "tables":
+                ["isb-cgc-bq:GDC_case_file_metadata_versioned.aliquot2caseIDmap_r23"],
+            "latest":
+                False
+
+        },
+        "R22":
+            {
+                "tables":
+                    ["isb-cgc-bq:GDC_case_file_metadata_versioned.aliquot2caseIDmap_r22"],
+                "latest":
+                    False
+
+            }
+        ,
+        "R21":
+            {
+                "tables":
+                    ["isb-cgc-bq:GDC_case_file_metadata_versioned.aliquot2caseIDmap_r21"],
+                "latest":
+                    False
+
+            }
+    }
+};
 def setup_app():
+
     global bq_table_files, bq_total_entries
     status_code = 200
     try:
@@ -340,6 +409,17 @@ def setup_app():
                         useful_joins = join['joins']
                         break
                 bq_meta_data_row['usefulJoins'] = useful_joins
+                # print(row_id)
+                split_ids = re.split(':|\.', row_id)
+                # print(split_ids)
+                proj_id = split_ids[0]
+                dataset_id = split_ids[1].rstrip('_versioned')
+                table_id = split_ids[2].rstrip('_current')
+                print(table_id)
+                # # break
+                version_id = f'{proj_id}:{dataset_id}.{table_id}'
+                # bq_meta_data_row['versions'] = None
+                # bq_meta_data_row['versions'] = versions_data[version_id]
     except requests.exceptions.HTTPError as e:
         error_message = 'HTTPError'
         status_code = e.response.status_code
