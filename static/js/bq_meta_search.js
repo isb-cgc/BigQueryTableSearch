@@ -197,7 +197,7 @@ $(document).ready(function () {
                 'name': 'releases',
                 'data': 'versions',
                 'render': function (data) {
-                    let num_vers = Object.keys(data).length;
+                    let num_vers = data ? Object.keys(data).length:0;
                     let display = num_vers == 0 ? '' :
                         '<div class="text-center"><a title="View list of released versions" class="view-versions badge rounded-pill bqmeta-outline-badge">' + num_vers + '</a></div>';
                     return display;
@@ -698,7 +698,7 @@ let format_tbl_versions = function (versions_data) {
     let html_tbl = '<div><table class="versions-table">';
     html_tbl += '<tr><th class="px-2">Version</th><th class="px-2">Table</th><th></th></tr>';
     for (let d of Object.keys(versions_data).sort().reverse()) {
-        html_tbl += '<tr><td class="px-2">' + d + (versions_data[d].latest ? "<span class='ms-2 badge rounded-pill bg-secondary'>Latest</span>" : "");
+        html_tbl += '<tr><td class="px-2">' + d + (versions_data[d].is_latest ? "<span class='ms-2 badge rounded-pill bg-secondary'>Latest</span>" : "");
         html_tbl += '</td><td class="px-2">';
         let table_link_list = [];
 
