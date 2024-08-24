@@ -557,6 +557,18 @@ tr.useful-join-shown .useful-join-detail.bqmeta-outline-badge, tr.versions-shown
     --dt-row-selected: 31, 93, 152;
     /*--bs-pagination-font-size: .9rem;*/
 }
+#bqmeta tr td span.view-versions:before {
+    font-family: FontAwesome;
+    font-size: 1.1em;
+    content: "\f0da";
+    color: #3A79B8;
+    cursor: pointer;
+    padding-right: 5px;
+}
+#bqmeta tr.versions-shown td span.view-versions:before {
+    content: "\f0d7";
+    color: #F7991B;
+}
 
 .form-label{
     font-weight: bold;
