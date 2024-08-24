@@ -54,12 +54,15 @@ logging_client = logging.Client()
 bq_total_entries = 0
 BQ_ECOSYS_BUCKET = os.environ.get('BQ_ECOSYS_BUCKET',
                                   'https://storage.googleapis.com/webapp-static-files-isb-cgc-dev/bq_ecosys/')
+# BQ_FILTER_FILE_NAME = 'bq_meta_filters_test.json'
 BQ_FILTER_FILE_NAME = 'bq_meta_filters.json'
 BQ_FILTER_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_FILTER_FILE_NAME
+# BQ_METADATA_FILE_NAME = 'bq_meta_data_test.json'
 BQ_METADATA_FILE_NAME = 'bq_meta_data.json'
 BQ_METADATA_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_METADATA_FILE_NAME
 BQ_USEFUL_JOIN_FILE_NAME = 'bq_useful_join.json'
 BQ_USEFUL_JOIN_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_USEFUL_JOIN_FILE_NAME
+# BQ_VERSIONS_FILE_NAME = 'bq_versions_test.json'
 BQ_VERSIONS_FILE_NAME = 'bq_versions.json'
 BQ_VERSIONS_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_VERSIONS_FILE_NAME
 
