@@ -67,40 +67,22 @@ $(document).ready(function () {
             {
                 'className': 'colvis-toggle',
                 'name': 'version',
-                // 'data': 'versions',
-                // 'render':
-                //
                 'data': function (data) {
-
-                    // let tbl_ver = filtered_label_data(data.labels, 'version');
-                    // let version_hist =
                     return {
                         'table_version': filtered_label_data(data.labels, 'version'),
                         'releases': data.versions
                     }
                 },
-                // 'render': function (data, type) {
-                //   return '';
-                // },
                 'render': function (data, type) {
                     let html_version = '';
                     if (data.table_version){
                         html_version = data.table_version;
                         let num_vers = data.releases ? Object.keys(data.releases).length:0;
-                        if (num_vers){
-                            html_version = '<span class="view-versions me-2">'+html_version+'</span>';
-                            // html_version += '<br/><a title="View list of released versions" class="view-versions badge rounded-pill bqmeta-outline-badge">' + num_vers + '</a>';
-                        }
+                        let ver_clss = num_vers ? 'view-versions me-2': 'me-4';
+                        html_version = '<span class="'+ver_clss+'">'+html_version+'</span>';
                     }
                     return html_version;
                 },
-
-                // 'render': function (data) {
-                //     let num_vers = data ? Object.keys(data).length:0;
-                //     let display = num_vers == 0 ? '' :
-                //         '<div class="text-center"><a title="View list of released versions" class="view-versions badge rounded-pill bqmeta-outline-badge">' + num_vers + '</a></div>';
-                //     return display;
-                // },
                 'searchable': false
             },
             {

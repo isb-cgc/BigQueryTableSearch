@@ -493,7 +493,8 @@ a.bqmeta-outline-badge{
     color: #F7991B;
 }
 
-tr.useful-join-shown .useful-join-detail.bqmeta-outline-badge, tr.versions-shown .view-versions.bqmeta-outline-badge {
+tr.useful-join-shown .useful-join-detail.bqmeta-outline-badge {
+/*tr.useful-join-shown .useful-join-detail.bqmeta-outline-badge, tr.versions-shown .view-versions.bqmeta-outline-badge {*/
     color: white !important;
     background-color: #F7991B;
     border: 1px solid #F7991B;
@@ -557,17 +558,23 @@ tr.useful-join-shown .useful-join-detail.bqmeta-outline-badge, tr.versions-shown
     --dt-row-selected: 31, 93, 152;
     /*--bs-pagination-font-size: .9rem;*/
 }
+#bqmeta tr td span.view-versions{
+    color: #2B7388;
+    /*color: #3A79B8;*/
+    cursor: pointer;
+}
+#bqmeta tr.versions-shown td span.view-versions {
+    color: #F7991B;
+}
+
 #bqmeta tr td span.view-versions:before {
     font-family: FontAwesome;
     font-size: 1.1em;
     content: "\f0da";
-    color: #3A79B8;
-    cursor: pointer;
     padding-right: 5px;
 }
 #bqmeta tr.versions-shown td span.view-versions:before {
     content: "\f0d7";
-    color: #F7991B;
 }
 
 .form-label{
