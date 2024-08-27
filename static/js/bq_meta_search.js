@@ -329,9 +329,23 @@ $(document).ready(function () {
         }
 
     });
-    // $('#bqmeta').on('error.dt', function (e, settings, techNote, message) {
-    //     console.log('An error has been reported by DataTables: ', message);
-    // })
+    table.on('buttons-action', function (e, buttonApi, dataTable, node, config) {
+        if (buttonApi.text() == 'Version') {
+            hide_open_child_rows(dataTable, '.shown.versions-shown','shown, versions-shown');
+        } else if (buttonApi.text() == 'Example Joins') {
+            hide_open_child_rows(dataTable, '.shown.useful-join-shown','shown, useful-join-shown');
+        }
+    });
+    let hide_open_child_rows = function (dt, row_selector, row_classes) {
+        dt.rows(row_selector).every(function () {
+                let row = this;
+                if (row.child.isShown()) {
+                    row.child.hide();
+                    $(this.node()).removeClass(row_classes);
+                }
+            }
+        );
+    };
     let updateSearch = function () {
         let filter_arr = [];
         $('.bq-filter').each(function () {
