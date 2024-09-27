@@ -221,7 +221,7 @@ $(document).ready(function () {
                     return data.usefulJoins;
                 },
                 'render': function (data, type) {
-                    let num_joins = data.length;
+                    let num_joins = data ? data.length: 0;
                     let display = num_joins == 0 ? '' :
                         '<div class="text-center"><a title="View List of Examples" class="useful-join-detail badge rounded-pill bqmeta-outline-badge">' + num_joins + '</a></div>';
                     return display;
@@ -717,12 +717,12 @@ let formatFullId = function (tblRef, wrapText) {
 let copy_to_clipboard = function (el) {
     navigator.clipboard.writeText(el.text());
 };
-
+const sortAlphaNum = (a, b) => a.localeCompare(b, 'en', {numeric: true})
 let format_tbl_versions = function (versions_data) {
 
     let html_tbl = '<div><table class="versions-table">';
     html_tbl += '<tr><th class="px-2">Version</th><th class="px-2">Table</th><th></th></tr>';
-    for (let d of Object.keys(versions_data).sort().reverse()) {
+    for (let d of Object.keys(versions_data).sort(sortAlphaNum).reverse()) {
         html_tbl += '<tr><td class="px-2">' + d + (versions_data[d].is_latest ? "<span class='ms-2 badge rounded-pill bg-secondary'>Latest</span>" : "");
         html_tbl += '</td><td class="px-2">';
         let table_link_list = [];

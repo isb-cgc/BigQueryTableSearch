@@ -30,9 +30,9 @@ commands:
               DEP_BUCKET=${DEPLOYMENT_BUCKET_PROD}
               DEP_PROJECT_ID=${DEPLOYMENT_PROJECT_ID_PROD}
             elif [[ ${TIER} == "UAT" ]]; then
-              KEY=${DEPLOYMENT_KEY_BQ_TABLE_SEARCH_UAT}
+              KEY=${DEPLOYMENT_KEY_UAT}
               CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_BQ_TABLE_SEARCH_UAT}
-              DEP_BUCKET=${DEPLOYMENT_BUCKET_UAT}
+              DEP_BUCKET=${DEPLOYMENT_KEY_BQ_TABLE_SEARCH_UAT}
               DEP_PROJECT_ID=${DEPLOYMENT_PROJECT_ID_UAT}
             elif [[ ${TIER} == "TEST" ]]; then
               KEY=${DEPLOYMENT_KEY_BQ_TABLE_SEARCH_TEST}
@@ -73,7 +73,7 @@ jobs:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
     working_directory: ~/BigQueryTableSearch
     docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:3.12
     steps:
       - checkout
       - run:
@@ -111,7 +111,7 @@ jobs:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
     working_directory: ~/BigQueryTableSearch
     docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:3.12
     steps:
       - restore_cache:
           keys:
