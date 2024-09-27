@@ -221,7 +221,7 @@ $(document).ready(function () {
                     return data.usefulJoins;
                 },
                 'render': function (data, type) {
-                    let num_joins = data.length;
+                    let num_joins = data ? data.length: 0;
                     let display = num_joins == 0 ? '' :
                         '<div class="text-center"><a title="View List of Examples" class="useful-join-detail badge rounded-pill bqmeta-outline-badge">' + num_joins + '</a></div>';
                     return display;
