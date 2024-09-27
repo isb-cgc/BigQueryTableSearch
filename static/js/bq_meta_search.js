@@ -884,7 +884,7 @@ let form_schema_table = function (data) {
 
 let filtered_label_data = function (data_labels, filter_key_term) {
     let filtered_val_arr = $.map(data_labels, function (val, key) {
-        return key.startsWith(filter_key_term) ? val : null;
+        return key.startsWith(filter_key_term) ? val.replace('_','.') : null;
     });
     return (filtered_val_arr.length > 0 ? filtered_val_arr.join(', ') : null);
 };
