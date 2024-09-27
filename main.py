@@ -103,8 +103,8 @@ def privacy():
 
 @app.route("/search", methods=['POST', 'GET'])
 def search(status=None):
-    if not bq_table_files['bq_filters']['file_data']:
-        setup_app()
+    # if not bq_table_files['bq_filters']['file_data']:
+    setup_app()
     selected_filters = {}
     if request.method == 'POST':
         rq_meth = request.form
