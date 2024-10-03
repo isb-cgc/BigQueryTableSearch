@@ -604,7 +604,7 @@ let is_quoted = function (fieldVal) {
 
 
 let show_tbl_versions = function (row, tr, data) {
-    row.child(format_tbl_versions(data)).show();
+    row.child(format_tbl_versions(data, row.data().id.replace(':','.'))).show();
     tr.removeClass('details-shown');
     tr.removeClass('useful-join-shown');
     tr.removeClass('preview-shown');
@@ -718,7 +718,7 @@ let copy_to_clipboard = function (el) {
     navigator.clipboard.writeText(el.text());
 };
 const sortAlphaNum = (a, b) => a.localeCompare(b, 'en', {numeric: true})
-let format_tbl_versions = function (versions_data) {
+let format_tbl_versions = function (versions_data, row_table_id) {
 
     let html_tbl = '<div><table class="versions-table">';
     html_tbl += '<tr><th class="px-2">Version</th><th class="px-2">Table</th><th></th></tr>';
@@ -726,10 +726,9 @@ let format_tbl_versions = function (versions_data) {
         html_tbl += '<tr><td class="px-2">' + d + (versions_data[d].is_latest ? "<span class='ms-2 badge rounded-pill bg-secondary'>Latest</span>" : "");
         html_tbl += '</td><td class="px-2">';
         let table_link_list = [];
-
         for (let t of versions_data[d].tables) {
-            let refs = get_joined_table_refs(t)
-            table_link_list.push('<a class="table-link" rel="noreferrer" target="_blank" href="' + refs.table_url + '">' + refs.formatted_id + '</a>');
+            let refs = get_joined_table_refs(t);
+            table_link_list.push((row_table_id == refs.formatted_id ? '<span class="text-secondary fw-bold pe-2">&#8728;</span>':'<span class="pe-2">&nbsp;&nbsp;</span>')+'<a class="table-link" rel="noreferrer" target="_blank" href="' + refs.table_url + '">' + refs.formatted_id + '</a>');
         }
         html_tbl += table_link_list.join('<br/>');
         html_tbl += '</td></tr>';
