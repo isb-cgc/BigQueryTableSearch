@@ -68,8 +68,9 @@ $(document).ready(function () {
                 'className': 'colvis-toggle',
                 'name': 'version',
                 'data': function (data) {
+                    let table_version = filtered_label_data(data.labels, 'version');
                     return {
-                        'table_version': filtered_label_data(data.labels, 'version').replace('_','.'),
+                        'table_version': table_version ? table_version.replace('_','.'): null,
                         'releases': data.versions
                     }
                 },
