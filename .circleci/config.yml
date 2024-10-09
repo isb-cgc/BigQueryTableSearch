@@ -32,7 +32,7 @@ commands:
             elif [[ ${TIER} == "UAT" ]]; then
               KEY=${DEPLOYMENT_KEY_UAT}
               CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_UAT}
-              DEP_BUCKET=${DEPLOYMENT_BUCKET_UAT}
+              DEP_BUCKET=${DEPLOYMENT_KEY_BQ_TABLE_SEARCH_UAT}
               DEP_PROJECT_ID=${DEPLOYMENT_PROJECT_ID_UAT}
             elif [[ ${TIER} == "TEST" ]]; then
               KEY=${DEPLOYMENT_KEY_BQ_TABLE_SEARCH_TEST}
