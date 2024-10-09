@@ -68,8 +68,9 @@ $(document).ready(function () {
                 'className': 'colvis-toggle',
                 'name': 'version',
                 'data': function (data) {
+                    let table_version = filtered_label_data(data.labels, 'version');
                     return {
-                        'table_version': filtered_label_data(data.labels, 'version'),
+                        'table_version': table_version ? table_version.replace('_','.'): null,
                         'releases': data.versions
                     }
                 },
@@ -883,7 +884,7 @@ let form_schema_table = function (data) {
 
 let filtered_label_data = function (data_labels, filter_key_term) {
     let filtered_val_arr = $.map(data_labels, function (val, key) {
-        return key.startsWith(filter_key_term) ? val.replace('_','.') : null;
+        return key.startsWith(filter_key_term) ? val : null;
     });
     return (filtered_val_arr.length > 0 ? filtered_val_arr.join(', ') : null);
 };
