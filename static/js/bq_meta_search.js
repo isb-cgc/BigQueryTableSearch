@@ -349,7 +349,7 @@ $(document).ready(function () {
         let filter_str = filter_arr.join('&');
         let updated_url = "/search_api" + (filter_str ? '?' + filter_str : '');
         table.ajax.url(updated_url).load();
-        window.history.pushState(null, 'BigQuery Table Search', filter_str ? ('?' + filter_str) : '');
+        window.history.pushState(null, 'BigQuery Table Search', filter_str ? ('?' + filter_str) : '/search');
     };
 
     $('.bq-filter').on('keyup', function () {
