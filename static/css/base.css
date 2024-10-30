@@ -427,7 +427,16 @@ button#show-btn:before {
     background-color: #eeeeee;
 }
 
-#bqmeta tr td table.detail-table th table.schema-table th, #bqmeta tr td table.detail-table th td, #bqmeta tr td table.detail-table td table.schema-table th, #bqmeta tr td table.detail-table td td {
+table.versions-table{
+    margin-left: 3rem;
+    margin-bottom: .5rem;
+}
+
+table.versions-table tr{
+   vertical-align: top;
+}
+
+table.versions-table th, table.versions-table tr, #bqmeta tr td table.detail-table th table.schema-table th, #bqmeta tr td table.detail-table th td, #bqmeta tr td table.detail-table td table.schema-table th, #bqmeta tr td table.detail-table td td {
     border-bottom: 1px solid lightgrey;
 }
 
@@ -469,6 +478,7 @@ button#show-btn:before {
 .bqmeta-outline-badge {
     border: 1px solid #3A79B8;
     background-color: transparent;
+    color: #3A79B8;
 }
 
 .bqmeta-outline-badge:hover {
@@ -483,12 +493,11 @@ a.bqmeta-outline-badge{
     color: #F7991B;
 }
 
-tr.useful-join-shown .bqmeta-outline-badge {
+tr.useful-join-shown .useful-join-detail.bqmeta-outline-badge {
+/*tr.useful-join-shown .useful-join-detail.bqmeta-outline-badge, tr.versions-shown .view-versions.bqmeta-outline-badge {*/
     color: white !important;
     background-color: #F7991B;
     border: 1px solid #F7991B;
-    /*font-size: 0.9rem;*/
-    /*background-color: transparent;*/
 }
 
 #bqmeta tr td table.useful-join-table td button:hover {
@@ -517,7 +526,7 @@ tr.useful-join-shown .bqmeta-outline-badge {
     cursor: pointer;
 }
 
-#bqmeta tr td a.joined-table-link {
+#bqmeta tr td a.table-link {
     color: #3A79B8;
     cursor: pointer;
 }
@@ -531,7 +540,7 @@ tr.useful-join-shown .bqmeta-outline-badge {
     color: #F7991B;
 }
 
-#bq-meta-searcher .joined-table-link {
+#bq-meta-searcher .table-link {
     color: #3A79B8;
     cursor: pointer;
 }
@@ -548,6 +557,24 @@ tr.useful-join-shown .bqmeta-outline-badge {
 #bq-meta-searcher {
     --dt-row-selected: 31, 93, 152;
     /*--bs-pagination-font-size: .9rem;*/
+}
+#bqmeta tr td span.view-versions{
+    color: #2B7388;
+    /*color: #3A79B8;*/
+    cursor: pointer;
+}
+#bqmeta tr.versions-shown td span.view-versions {
+    color: #F7991B;
+}
+
+#bqmeta tr td span.view-versions:before {
+    font-family: FontAwesome;
+    font-size: 1.1em;
+    content: "\f0da";
+    padding-right: 5px;
+}
+#bqmeta tr.versions-shown td span.view-versions:before {
+    content: "\f0d7";
 }
 
 .form-label{

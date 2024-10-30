@@ -54,12 +54,19 @@ logging_client = logging.Client()
 bq_total_entries = 0
 BQ_ECOSYS_BUCKET = os.environ.get('BQ_ECOSYS_BUCKET',
                                   'https://storage.googleapis.com/webapp-static-files-isb-cgc-dev/bq_ecosys/')
+# BQ_FILTER_FILE_NAME = 'bq_meta_filters_test.json'
 BQ_FILTER_FILE_NAME = 'bq_meta_filters.json'
 BQ_FILTER_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_FILTER_FILE_NAME
+# BQ_METADATA_FILE_NAME = 'bq_meta_data_test.json'
 BQ_METADATA_FILE_NAME = 'bq_meta_data.json'
 BQ_METADATA_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_METADATA_FILE_NAME
 BQ_USEFUL_JOIN_FILE_NAME = 'bq_useful_join.json'
 BQ_USEFUL_JOIN_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_USEFUL_JOIN_FILE_NAME
+# BQ_VERSIONS_FILE_NAME = 'bq_versions_test.json'
+BQ_VERSIONS_FILE_NAME = 'bq_versions.json'
+BQ_VERSIONS_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_VERSIONS_FILE_NAME
+BQ_MARKED_TABLE_MAP_FILE_NAME = 'bq_marked_tbl_map.json'
+BQ_MARKED_TABLE_MAP_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_MARKED_TABLE_MAP_FILE_NAME
 
 bq_table_files = {
     'bq_filters': {'last_modified': None, 'file_path': BQ_FILTER_FILE_PATH,
@@ -67,7 +74,10 @@ bq_table_files = {
     'bq_metadata': {'last_modified': None, 'file_path': BQ_METADATA_FILE_PATH,
                     'file_data': None},
     'bq_useful_join': {'last_modified': None, 'file_path': BQ_USEFUL_JOIN_FILE_PATH,
-                       'file_data': None}
+                       'file_data': None},
+    'bq_versions': {'last_modified': None, 'file_path': BQ_VERSIONS_FILE_PATH,
+                    'file_data': None},
+    'bq_marked_table_map': {'last_modified': None, 'file_path': BQ_MARKED_TABLE_MAP_FILE_PATH, 'file_data': None}
 }
 
 
@@ -93,8 +103,8 @@ def privacy():
 
 @app.route("/search", methods=['POST', 'GET'])
 def search(status=None):
-    if not bq_table_files['bq_filters']['file_data']:
-        setup_app()
+    # if not bq_table_files['bq_filters']['file_data']:
+    setup_app()
     selected_filters = {}
     if request.method == 'POST':
         rq_meth = request.form
@@ -187,7 +197,7 @@ def filter_by_prop(rq_meth, rows, attr_list, sub_category, exact_match_search):
                     field_dict = row.get(sub_category)
                     if field_dict:
                         if sub_category == 'labels':
-                            for k in field_dict.keys():
+                            for k in field_dict:
                                 for f_val in f_vals.split('|'):
                                     if k.startswith(attr):
                                         if is_quoted(f_val):
@@ -303,7 +313,7 @@ def get_schema_fields(schema_field):
     nested_schema_dic = {}
     if schema_field.fields:
         for field in schema_field.fields:
-            if schema_field.name in nested_schema_dic.keys():
+            if schema_field.name in nested_schema_dic:
                 nested_schema_dic[schema_field.name].append(get_schema_fields(field))
             else:
                 nested_schema_dic[schema_field.name] = [get_schema_fields(field)]
@@ -318,6 +328,8 @@ def setup_app():
     try:
         is_bq_metadata_updated = False
         is_useful_join_updated = False
+        is_version_file_updated = False
+        is_version_map_file_updated = False
         for f in bq_table_files:
             r = requests.head(bq_table_files[f]['file_path'] + '?t=' + str(randint(1000, 9999)))
             r.raise_for_status()
@@ -327,19 +339,51 @@ def setup_app():
                     bq_table_files[f]['last_modified'] and (bq_table_files[f]['last_modified'] < file_last_modified)):
                 bq_table_files[f]['last_modified'] = file_last_modified
                 bq_table_files[f]['file_data'] = requests.get(bq_table_files[f]['file_path']).json()
-                is_bq_metadata_updated = (not is_bq_metadata_updated and f == 'bq_metadata')
-                is_useful_join_updated = (not is_useful_join_updated and f == 'bq_useful_join')
+                if f == 'bq_metadata':
+                    is_bq_metadata_updated = (not is_bq_metadata_updated)
+                elif f == 'bq_useful_join':
+                    is_useful_join_updated = not is_useful_join_updated
+                elif f == 'bq_versions':
+                    is_version_file_updated = not is_version_file_updated
+                elif f == 'bq_marked_table_map':
+                    is_version_map_file_updated = not is_version_map_file_updated
         bq_total_entries = len(bq_table_files['bq_metadata']['file_data']) if bq_table_files['bq_metadata'][
             'file_data'] else 0
-        if (is_bq_metadata_updated and bq_total_entries) or is_useful_join_updated:
+        if (is_bq_metadata_updated and bq_total_entries) or is_useful_join_updated or is_version_file_updated or is_version_map_file_updated:
             for bq_meta_data_row in bq_table_files['bq_metadata']['file_data']:
                 useful_joins = []
                 row_id = bq_meta_data_row['id']
+
                 for join in bq_table_files['bq_useful_join']['file_data']:
                     if join['id'] == row_id:
                         useful_joins = join['joins']
                         break
                 bq_meta_data_row['usefulJoins'] = useful_joins
+                table_version_info = None
+                if 'labels' in bq_meta_data_row and 'version' in bq_meta_data_row['labels']:
+                    labeled_version = bq_meta_data_row['labels']['version']
+                    split_ids = re.split(':|\.', row_id)
+                    proj_id = split_ids[0]
+                    tbl_ds_id = split_ids[1]
+                    tbl_tbl_id = split_ids[2]
+                    version_id = None
+                    if tbl_tbl_id.endswith('_current'):
+                        root_tbl_tbl_id = tbl_tbl_id.removesuffix('current')
+                        version_id = f'{proj_id}:{tbl_ds_id}.{root_tbl_tbl_id}'
+                    else:
+                        if bq_table_files['bq_marked_table_map']['file_data'] and tbl_ds_id in bq_table_files['bq_marked_table_map']['file_data'][proj_id]:
+                            for t in bq_table_files['bq_marked_table_map']['file_data'][proj_id][tbl_ds_id]:
+                                if (t.startswith('_') and tbl_tbl_id.endswith(t)) or (t.endswith('_') and tbl_tbl_id.startswith(t)):
+                                    version_id = bq_table_files['bq_marked_table_map']['file_data'][proj_id][tbl_ds_id][t]
+                                    break
+                        if not version_id and tbl_ds_id.endswith('_versioned'):
+                            root_tbl_ds_id = tbl_ds_id.removesuffix('_versioned')
+                            root_tbl_tbl_id = tbl_tbl_id.removesuffix(f'{labeled_version}'.lower())
+                            root_tbl_tbl_id = root_tbl_tbl_id.removesuffix(f'{labeled_version}'.upper())
+                            version_id = f'{proj_id}:{root_tbl_ds_id}.{root_tbl_tbl_id}'
+                    if version_id and version_id in bq_table_files['bq_versions']['file_data']:
+                        table_version_info = bq_table_files['bq_versions']['file_data'][version_id]
+                bq_meta_data_row['versions'] = table_version_info
     except requests.exceptions.HTTPError as e:
         error_message = 'HTTPError'
         status_code = e.response.status_code
@@ -356,7 +400,6 @@ def setup_app():
         bq_table_files['bq_useful_join']['file_data'] = None
         bq_total_entries = 0
         app.logger.error(f'ERROR While attempting to retrieve BQ metadata file: [{status_code}] {error_message}')
-
 
 setup_app()
 

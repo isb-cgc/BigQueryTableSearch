@@ -73,7 +73,7 @@ jobs:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
     working_directory: ~/BigQueryTableSearch
     docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:3.12
     steps:
       - checkout
       - run:
@@ -96,6 +96,7 @@ jobs:
           name: Compare Config
           command: |
             sudo -E /bin/bash ./shell/compareConfig.sh "gs://${DEPLOYMENT_BUCKET}/bqs_deployment_config.txt"
+            sudo -E /bin/bash ./shell/compareConfig.sh "gs://${DEPLOYMENT_BUCKET}/bqs_app.yaml"
       - save_cache:
           key: bq-table-search-{{ epoch }}
           paths:
@@ -111,7 +112,7 @@ jobs:
       TZ: "/usr/share/zoneinfo/America/Los_Angeles"
     working_directory: ~/BigQueryTableSearch
     docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:3.12
     steps:
       - restore_cache:
           keys:
