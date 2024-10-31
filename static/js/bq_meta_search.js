@@ -70,7 +70,7 @@ $(document).ready(function () {
                 'data': function (data) {
                     let table_version = filtered_label_data(data.labels, 'version');
                     return {
-                        'table_version': table_version ? table_version.replace('_','.'): null,
+                        'table_version': table_version ? table_version.replaceAll('_','.'): null,
                         'releases': data.versions
                     }
                 },
