@@ -30,7 +30,7 @@ commands:
               DEP_BUCKET=${DEPLOYMENT_BUCKET_PROD}
               DEP_PROJECT_ID=${DEPLOYMENT_PROJECT_ID_PROD}
             elif [[ ${TIER} == "UAT" ]]; then
-              KEY=${DEPLOYMENT_KEY_UAT}
+              KEY=${DEPLOYMENT_KEY_BQ_TABLE_SEARCH_UAT}
               CLIENT_EMAIL=${DEPLOYMENT_CLIENT_EMAIL_UAT}
               DEP_BUCKET=${DEPLOYMENT_BUCKET_UAT}
               DEP_PROJECT_ID=${DEPLOYMENT_PROJECT_ID_UAT}
