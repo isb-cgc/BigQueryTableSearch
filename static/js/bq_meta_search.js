@@ -662,7 +662,7 @@ let format_useful_join_details = function (d) {
 
 let get_joined_table_refs = function (full_table_id) {
     let tableRefs = full_table_id.split(/[:.]/);
-    let table_url = '/search?projectId=' + tableRefs[0] + '&datasetId=' + tableRefs[1] + '&tableId=' + tableRefs[2];
+    let table_url = '/search?projectId=\'' + tableRefs[0] + '\'&datasetId=\'' + tableRefs[1] + '\'&tableId=\'' + tableRefs[2]+'\'';
     let formatted_id = tableRefs.join('.');
     return {
         'table_url': table_url,
