@@ -72,7 +72,7 @@ $(document).ready(function () {
                     return {
                         'table_version': table_version ? table_version.replaceAll('_','.'): null,
                         'releases': data.versions,
-                        'type':  (data.id.endsWith('_current') ? 'Always New' : 'Stable')
+                        'type':  (data.id.endsWith('_current') ? 'Always Newest' : 'Stable')
                     }
                 },
                 'render': function (data) {
@@ -743,7 +743,7 @@ let format_tbl_versions = function (versions_data, row_table_id) {
         for (let t of versions_data[d].tables) {
             let refs = get_joined_table_refs(t);
             table_link_list.push((row_table_id == refs.formatted_id ? '<span class="text-secondary fw-bold pe-1">&rarr;</span>':'<span class="pe-2">&nbsp;&nbsp;</span>')+'<a class="table-link" rel="noreferrer" target="_blank" href="' + refs.table_url + '">' + refs.formatted_id + '</a>');
-            type_list.push(refs.formatted_id.endsWith('_current') ? 'Always New': 'Stable');
+            type_list.push(refs.formatted_id.endsWith('_current') ? 'Always Newest': 'Stable');
         }
         html_tbl += table_link_list.join('<br/>');
         html_tbl += '</td><td class="px-2">';
