@@ -33,17 +33,16 @@
                         </select>
                     </div>
                     <div>
-                        <label class="">Include <strong>Always Newest</strong> tables <i class="fa fa-info-circle" data-placement="bottom"
-                                   title="Include tables that are updated regularly to the latest version."></i></label>
-                        <div id="hideDynamic">
+                        <span class="">Include <strong>Always Newest</strong> <i class="fa fa-info-circle" data-placement="bottom"
+                                   title="Include tables that are updated regularly to the latest version."></i> tables</span>
+                        <span class="small ms-4">
                             Off
                             <label class="switch">
-                                <input class="bq-switch" type="checkbox" data-column-name="exclude_always_new"
-                                       value="true">
+                                <input id="include_always_newest" class="bq-switch" type="checkbox" value="true">
                                 <span class="slider round"></span>
                             </label>
                             On
-                        </div>
+                        </span>
                     </div>
                     <div>
                         <label class="form-label">Name</label>
