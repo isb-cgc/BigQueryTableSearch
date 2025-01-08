@@ -374,7 +374,7 @@ $(document).ready(function () {
             }
         });
         let checkbox_filters = {};
-        $('input.bq-checkbox:checked, input.bq-switch:not(:checked)').each(function () {
+        $('input.bq-checkbox:checked').each(function () {
             let column_name = $(this).attr('data-column-name');
             let term = $(this).val();
             if (column_name in checkbox_filters) {
@@ -383,6 +383,7 @@ $(document).ready(function () {
                 checkbox_filters[column_name] = [term];
             }
         });
+        checkbox_filters['include_always_newest'] = [($('#include_always_newest').prop('checked') ? 'true':'false')];
         for (col in checkbox_filters) {
             filter_arr.push(col + '=' + checkbox_filters[col].join('|'))
         }
@@ -405,6 +406,7 @@ $(document).ready(function () {
         $(".autocomplete_select_box").val('').trigger("chosen:updated");
         $('.bq-filter, .bq-select').val('');
         $('#status').val('current');
+        $('#include_always_newest').prop('checked', false);
         $('.bq-checkbox').prop('checked', false);
         updateSearch();
     });
@@ -567,6 +569,9 @@ let set_filters = function () {
     let text_filters = ['friendlyName', 'datasetId', 'tableId', 'description', 'field_name', 'labels'];
     let show_more_filters = ['projectId', 'datasetId', 'tableId', 'description', 'field_name', 'labels'];
     let show_all_filters = false;
+    if (!('include_always_newest' in selected_filters)){
+        selected_filters['include_always_newest'] = 'true';
+    }
     for (const f in selected_filters) {
         if (select_filters.includes(f)) {
             $("select[data-column-name='" + f + "'] option").each(function () {
@@ -586,6 +591,8 @@ let set_filters = function () {
             $("input[data-column-name='" + f + "']").each(function () {
                 $(this).prop('checked', selected_filters[f].includes($(this).val()));
             });
+        } else if (f === 'include_always_newest') {
+            $('#include_always_newest').prop('checked', selected_filters[f] == 'true');
         }
         if (!show_all_filters && show_more_filters.includes(f)) {
             show_all_filters = true;
