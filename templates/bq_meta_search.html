@@ -33,6 +33,19 @@
                         </select>
                     </div>
                     <div>
+                        <label class="">Include <strong>Always Newest</strong> tables <i class="fa fa-info-circle" data-placement="bottom"
+                                   title="Include tables that are updated regularly to the latest version."></i></label>
+                        <div id="hideDynamic">
+                            Off
+                            <label class="switch">
+                                <input class="bq-switch" type="checkbox" data-column-name="exclude_always_new"
+                                       value="true">
+                                <span class="slider round"></span>
+                            </label>
+                            On
+                        </div>
+                    </div>
+                    <div>
                         <label class="form-label">Name</label>
                         <input type="text" class="form-control bq-filter" data-column-name="friendlyName">
                     </div>
@@ -172,11 +185,9 @@
                 <th>Source</th>
                 <th>Data Type</th>
                 <th title="Experimental Strategy">Exp. Strategy</th>
-
                 <th style="width:9%;">Status</th>
                 <th style="width:8%;">Rows</th>
                 <th style="width:8%;">Created</th>
-<!--                <th style="width:8%;">Release History</th>-->
                 <th style="width:8%;">Example Joins</th>
                 <th style="width:7%;">Preview</th>
                 <th style="width:7%;">Description</th>
