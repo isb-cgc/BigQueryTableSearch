@@ -374,7 +374,7 @@ $(document).ready(function () {
             }
         });
         let checkbox_filters = {};
-        $('input.bq-checkbox:checked, input.bq-switch:not(:checked)').each(function () {
+        $('input.bq-checkbox:checked').each(function () {
             let column_name = $(this).attr('data-column-name');
             let term = $(this).val();
             if (column_name in checkbox_filters) {
