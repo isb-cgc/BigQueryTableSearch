@@ -83,7 +83,7 @@ bq_table_files = {
 
 @app.route("/", methods=['POST', 'GET'])
 def home():
-    return redirect(url_for('search', status='current'))
+    return redirect(url_for('search', status='current', exclude_always_new='true'))
 
 
 # @app.route("/faq/")
@@ -103,14 +103,13 @@ def privacy():
 
 @app.route("/search", methods=['POST', 'GET'])
 def search(status=None):
-    # if not bq_table_files['bq_filters']['file_data']:
     setup_app()
     selected_filters = {}
     if request.method == 'POST':
         rq_meth = request.form
     else:
         rq_meth = request.args
-    for f in ['projectId', 'datasetId', 'tableId', 'friendlyName', 'description', 'field_name', 'labels',
+    for f in ['projectId', 'datasetId', 'tableId', 'friendlyName', 'description', 'field_name', 'labels', 'exclude_always_new',
               'status', 'category', 'experimental_strategy', 'program', 'source', 'data_type', 'reference_genome']:
         if rq_meth.get(f):
             selected_filters[f] = request.args.get(f).lower()
@@ -270,6 +269,14 @@ def filter_by_field_name(rq_meth, rows):
     return rows
 
 
+def exclude_always_new(rows):
+    filtered_rows = []
+    for row in rows:
+        if not row.get('tableReference')['tableId'].endswith('_current'):
+            filtered_rows.append(row)
+    return filtered_rows
+
+
 def filter_by_all_labels(rq_meth, rows):
     f_val = rq_meth.get('labels', '').strip().lower()
     if f_val:
@@ -305,6 +312,8 @@ def filter_rows(rows, req):
                               filter_prop['is_exact_match'])
     rows = filter_by_field_name(rq_meth, rows)
     rows = filter_by_all_labels(rq_meth, rows)
+    if rq_meth.get('exclude_always_new','').lower() == 'true':
+        rows = exclude_always_new(rows)
 
     return rows
 
