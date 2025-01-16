@@ -283,6 +283,10 @@ a:hover {
     font-size: .8em;
 }
 
+#bq-meta-form a .fa-info-circle:hover {
+    color: #F7991B;
+}
+
 #bq-meta-form .tooltip.bottom {
     margin-top: 0;
     padding: 2px 0;
