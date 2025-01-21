@@ -66,25 +66,28 @@ $(document).ready(function () {
             },
             {
                 'className': 'colvis-toggle',
-                'name': 'version',
+                'name': 'version_type',
                 'data': function (data) {
                     let table_version = filtered_label_data(data.labels, 'version');
                     return {
                         'table_version': table_version ? table_version.replaceAll('_','.'): null,
-                        'releases': data.versions
+                        'releases': data.versions,
+                        'type':  (data.id.endsWith('_current') ? 'Always Newest' : 'Stable')
                     }
                 },
-                'render': function (data, type) {
+                'render': function (data) {
                     let html_version = '';
                     if (data.table_version){
                         html_version = data.table_version;
                         let num_vers = data.releases ? Object.keys(data.releases).length:0;
                         let ver_clss = num_vers ? 'view-versions me-2': 'me-4';
                         html_version = '<span class="'+ver_clss+'">'+html_version+'</span>';
+                        html_version += '</br>('+data.type+')';
                     }
+
                     return html_version;
                 },
-                'searchable': false
+                'searchable': true
             },
             {
                 'name': 'projectId',
@@ -380,6 +383,7 @@ $(document).ready(function () {
                 checkbox_filters[column_name] = [term];
             }
         });
+        checkbox_filters['include_always_newest'] = [($('#include_always_newest').prop('checked') ? 'true':'false')];
         for (col in checkbox_filters) {
             filter_arr.push(col + '=' + checkbox_filters[col].join('|'))
         }
@@ -394,7 +398,7 @@ $(document).ready(function () {
         updateSearch();
     });
 
-    $('.bq-checkbox, .bq-select').on('change', function () {
+    $('.bq-checkbox, .bq-switch, .bq-select').on('change', function () {
         updateSearch();
     });
 
@@ -402,6 +406,7 @@ $(document).ready(function () {
         $(".autocomplete_select_box").val('').trigger("chosen:updated");
         $('.bq-filter, .bq-select').val('');
         $('#status').val('current');
+        $('#include_always_newest').prop('checked', false);
         $('.bq-checkbox').prop('checked', false);
         updateSearch();
     });
@@ -564,6 +569,9 @@ let set_filters = function () {
     let text_filters = ['friendlyName', 'datasetId', 'tableId', 'description', 'field_name', 'labels'];
     let show_more_filters = ['projectId', 'datasetId', 'tableId', 'description', 'field_name', 'labels'];
     let show_all_filters = false;
+    if (!('include_always_newest' in selected_filters)){
+        selected_filters['include_always_newest'] = 'true';
+    }
     for (const f in selected_filters) {
         if (select_filters.includes(f)) {
             $("select[data-column-name='" + f + "'] option").each(function () {
@@ -583,6 +591,8 @@ let set_filters = function () {
             $("input[data-column-name='" + f + "']").each(function () {
                 $(this).prop('checked', selected_filters[f].includes($(this).val()));
             });
+        } else if (f === 'include_always_newest') {
+            $('#include_always_newest').prop('checked', selected_filters[f] == 'true');
         }
         if (!show_all_filters && show_more_filters.includes(f)) {
             show_all_filters = true;
@@ -719,20 +729,25 @@ let formatFullId = function (tblRef, wrapText) {
 let copy_to_clipboard = function (el) {
     navigator.clipboard.writeText(el.text());
 };
-const sortAlphaNum = (a, b) => a.localeCompare(b, 'en', {numeric: true})
-let format_tbl_versions = function (versions_data, row_table_id) {
 
+const sortAlphaNum = (a, b) => a.localeCompare(b, 'en', {numeric: true})
+
+let format_tbl_versions = function (versions_data, row_table_id) {
     let html_tbl = '<div><table class="versions-table">';
-    html_tbl += '<tr><th class="px-2">Version</th><th class="px-2">Table</th><th></th></tr>';
+    html_tbl += '<tr><th class="px-2">Version</th><th class="px-2">Table</th><th class="px-2">Type</th></tr>';
     for (let d of Object.keys(versions_data).sort(sortAlphaNum).reverse()) {
         html_tbl += '<tr><td class="px-2">' + d + (versions_data[d].is_latest ? "<span class='ms-2 badge rounded-pill bg-secondary'>Latest</span>" : "");
         html_tbl += '</td><td class="px-2">';
         let table_link_list = [];
+        let type_list = [];
         for (let t of versions_data[d].tables) {
             let refs = get_joined_table_refs(t);
-            table_link_list.push((row_table_id == refs.formatted_id ? '<span class="text-secondary fw-bold pe-2">&#8728;</span>':'<span class="pe-2">&nbsp;&nbsp;</span>')+'<a class="table-link" rel="noreferrer" target="_blank" href="' + refs.table_url + '">' + refs.formatted_id + '</a>');
+            table_link_list.push((row_table_id == refs.formatted_id ? '<span class="text-secondary fw-bold pe-1">&rarr;</span>':'<span class="pe-2">&nbsp;&nbsp;</span>')+'<a class="table-link" rel="noreferrer" target="_blank" href="' + refs.table_url + '">' + refs.formatted_id + '</a>');
+            type_list.push(refs.formatted_id.endsWith('_current') ? 'Always Newest': 'Stable');
         }
         html_tbl += table_link_list.join('<br/>');
+        html_tbl += '</td><td class="px-2">';
+        html_tbl += type_list.join('<br/>');
         html_tbl += '</td></tr>';
     }
     html_tbl += '</table></div>';
