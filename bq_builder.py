@@ -14,12 +14,7 @@
 # limitations under the License.
 ###
 
-# import re
-# from google.cloud import bigquery
-# from os import getenv
-
-# BQ_METADATA_PROJ = getenv("BQ_METADATA_PROJ", "isb-cgc-dev-1")
-# metadata query builder
+import re
 import settings
 
 
@@ -36,7 +31,12 @@ def build_where_clause(conditions):
                 where_clause += f'{and_or_where} NOT ENDS_WITH(LOWER(R.tableId), \'_current\')\n'
                 i += 1
         else:
-            where_clause += f'{and_or_where} LOWER(R.{k}) LIKE \'%{vals.lower()}%\'\n'
+            where_clause += f'{and_or_where} LOWER(R.{k}) '
+            if is_quoted(vals) and  k not in ['description', 'friendlyName']:
+                where_clause += f'= {vals.lower()}\n'
+            else:
+                vals = vals.strip('\'\"')
+                where_clause += f'LIKE \'%{vals.lower()}%\'\n'
             i += 1
     return where_clause
 
@@ -86,3 +86,12 @@ def metadata_query(req):
     query_str += join_clause
     query_str += where_clause
     return query_str
+
+
+def is_quoted(field_val):
+    if field_val:
+        single_quotes = re.fullmatch(r"^\'.*\'$", field_val)
+        double_quotes = re.fullmatch(r'^\".*\"$', field_val)
+        return single_quotes or double_quotes
+    else:
+        return False
