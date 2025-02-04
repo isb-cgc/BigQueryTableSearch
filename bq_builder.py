@@ -41,11 +41,17 @@ def build_where_clause(conditions):
     return where_clause
 
 
+def is_valid(val):
+    invalid_match = re.match('[^a-zA-Z\d\s.-_:\'\"]', val.strip('\'\"'))
+    return not invalid_match
+
+
 def get_conditions(rq_meth, filters):
     conditions = []
     for f in filters:
-        if rq_meth.get(f, None):
-            conditions.append((f, rq_meth.get(f)))
+        v = rq_meth.get(f, None)
+        if v and is_valid(v):
+            conditions.append((f, v))
     return conditions
 
 
