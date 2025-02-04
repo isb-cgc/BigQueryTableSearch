@@ -1,5 +1,4 @@
 from os import getenv
-# import bq_builder
 from flask_talisman import Talisman
 import requests
 from random import randint
