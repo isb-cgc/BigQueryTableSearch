@@ -105,6 +105,8 @@ jobs:
             - ./static
             - ./LICENSE
             - ./main.py
+            - ./settings.py
+            - ./bq_builder.py
             - ./requirements.txt
 
   deploy_job:
