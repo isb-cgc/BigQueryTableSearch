@@ -32,7 +32,7 @@ def build_where_clause(conditions):
                 i += 1
         else:
             where_clause += f'{and_or_where} LOWER(R.{k}) '
-            if is_quoted(vals) and  k not in ['description', 'friendlyName']:
+            if is_quoted(vals) and k not in ['description', 'friendlyName'] or k == 'projectId':
                 where_clause += f'= {vals.lower()}\n'
             else:
                 vals = vals.strip('\'\"')
