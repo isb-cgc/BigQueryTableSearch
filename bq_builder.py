@@ -67,7 +67,7 @@ def build_join_clause(conditions, table_name):
             if i:
                 join_clause += 'OR '
             if k == 'field_name':
-                join_clause += f'(LOWER({k}.name) LIKE (\'%{val.lower()}%\')\n'
+                join_clause += f'(LOWER({k}.name) LIKE \'%{val.lower()}%\')\n'
             elif k == 'labels':
                 join_clause += f'(LOWER({k}.labelValue) LIKE \'%{val.lower()}%\')\n'
             else:
