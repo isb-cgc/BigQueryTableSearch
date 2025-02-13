@@ -74,8 +74,9 @@ def search_api():
     filtered_meta_data = []
     try:
         query_statement = bq_builder.metadata_query(request)
-        # print(query_statement)
-        bigquery_client = bigquery.Client(project=settings.BQ_METADATA_PROJ)
+        print(query_statement)
+        bigquery_client = bigquery.Client(project='isb-cgc-uat')
+        # bigquery_client = bigquery.Client(project=settings.BQ_METADATA_PROJ)
         query_job = bigquery_client.query(query_statement)
 
         result = query_job.result(timeout=30)
