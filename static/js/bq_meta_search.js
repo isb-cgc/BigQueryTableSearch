@@ -17,6 +17,9 @@
  */
 
 $(document).ready(function () {
+    let typingTimer;
+    const doneTypingInterval = 500; // Time in ms (0.5 seconds)
+
     let query_param_url = set_filters();
     let table = $('#bqmeta').DataTable({
         dom: 'lfBrtip',
@@ -395,7 +398,8 @@ $(document).ready(function () {
     };
 
     $('.bq-filter').on('keyup', function () {
-        updateSearch();
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(updateSearch, doneTypingInterval);
     });
 
     $('.bq-checkbox, .bq-switch, .bq-select').on('change', function () {
