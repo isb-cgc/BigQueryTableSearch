@@ -74,10 +74,8 @@ def search_api():
     filtered_meta_data = []
     try:
         query_statement = bq_builder.metadata_query(request)
-        print(query_statement)
-        bigquery_client = bigquery.Client()
-        # bigquery_client = bigquery.Client(project='isb-cgc-uat')
-        # bigquery_client = bigquery.Client(project=settings.BQ_METADATA_PROJ)
+        # print(query_statement)
+        bigquery_client = bigquery.Client(project=settings.BQ_METADATA_PROJ)
         query_job = bigquery_client.query(query_statement)
 
         result = query_job.result(timeout=30)
@@ -87,8 +85,7 @@ def search_api():
     except (concurrent.futures.TimeoutError, requests.exceptions.ReadTimeout):
         error_msg = "Sorry, query job has timed out."
     except (BadRequest, Exception) as e:
-
-        error_msg = f"There was an error during the download process: {e}"
+        error_msg = "There was an error during the download process."
     if error_msg:
         app.logger.error(f"[ERROR] {error_msg}")
     return jsonify(filtered_meta_data)
