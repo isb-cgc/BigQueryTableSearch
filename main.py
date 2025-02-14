@@ -75,7 +75,8 @@ def search_api():
     try:
         query_statement = bq_builder.metadata_query(request)
         print(query_statement)
-        bigquery_client = bigquery.Client(project='isb-cgc-uat')
+        bigquery_client = bigquery.Client()
+        # bigquery_client = bigquery.Client(project='isb-cgc-uat')
         # bigquery_client = bigquery.Client(project=settings.BQ_METADATA_PROJ)
         query_job = bigquery_client.query(query_statement)
 
