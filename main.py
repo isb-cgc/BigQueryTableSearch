@@ -86,7 +86,8 @@ def search_api():
     except (concurrent.futures.TimeoutError, requests.exceptions.ReadTimeout):
         error_msg = "Sorry, query job has timed out."
     except (BadRequest, Exception) as e:
-        error_msg = "There was an error during the download process."
+
+        error_msg = f"There was an error during the download process: {e}"
     if error_msg:
         app.logger.error(f"[ERROR] {error_msg}")
     return jsonify(filtered_meta_data)
