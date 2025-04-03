@@ -35,7 +35,7 @@
                     <div>
                         <span class="">Include <strong>Always Newest</strong> tables <a target="_blank" rel="noreferrer"
                                                                                         href="https://isb-cancer-genomics-cloud.readthedocs.io/en/latest/sections/BigQueryTableSearchUI.html#filters"><i
-                                class="fa fa-info-circle" data-placement="bottom"
+                                class="fa-solid fa-circle-info" data-placement="bottom"
                                 title="Include tables that are updated regularly to the latest version as distinct duplicate entries. (Click for more info)"></i></a></span>
                         <span class="small ms-4">
                             Off
@@ -71,7 +71,7 @@
 
                             <label class="label-filter form-check-label"
                                    for="cat_chbx_{{ loop.index }}">{{ option.label }}
-                                <i class="fa fa-info-circle" data-placement="bottom"
+                                <i class="fa-solid fa-circle-info" data-placement="bottom"
                                    title="{{ option.description }}"></i></label>
                         </div>
                         {% endfor %}
@@ -175,6 +175,7 @@
             <tr>
                 <th style="width:3%;"></th>
                 <th style="width:17%;">Name</th>
+                <th></th>
                 <th>Version</th>
                 <th style="width:15%;">BQ Project</th>
                 <th style="width:15%;">BQ Dataset</th>
@@ -190,11 +191,10 @@
                 <th style="width:8%;">Rows</th>
                 <th style="width:8%;">Created</th>
                 <th style="width:8%;">Example Joins</th>
-                <th style="width:7%;">Preview</th>
-                <th style="width:7%;">Description</th>
+                <th>Description</th>
                 <th>Labels</th>
                 <th>Fields</th>
-                <th style="width:3%;">Open</th>
+
             </tr>
             </thead>
             <tbody></tbody>
@@ -211,7 +211,7 @@
 <!-- Useful Join Modal -->
 <div class="modal fade" id="useful-join-view-modal" tabindex="-1" role="dialog"
      aria-labelledby="useful-join-view-title" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-light">
                 <h5 class="modal-title mt-0" id="useful-join-view-title">
