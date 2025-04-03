@@ -105,6 +105,8 @@ jobs:
             - ./static
             - ./LICENSE
             - ./main.py
+            - ./settings.py
+            - ./bq_builder.py
             - ./requirements.txt
 
   deploy_job:
@@ -120,7 +122,7 @@ jobs:
       - install_cloud_sdk
       - deployment_setup
       - auth
-      - deploy:
+      - run:
           command: |
             sudo -E rm -rf ./lib
             sudo -E gcloud app deploy --verbosity=debug ./app.yaml --service-account=${WEB_RUNTIME_SA_NAME} --quiet
