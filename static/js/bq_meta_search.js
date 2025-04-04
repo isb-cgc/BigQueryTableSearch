@@ -813,29 +813,31 @@ let format_tbl_preview = function (schema_fields, rows) {
 
 let format_schema_field_names = function (schema_fields, in_html) {
     let schema_field_names_str = '';
-    for (let col = 0; col < schema_fields.length; col++) {
-        if (schema_fields[col]['type'] === 'RECORD') {
-            let nested_fields = schema_fields[col]['fields'];
-            for (let n_col = 0; n_col < nested_fields.length; n_col++) {
-                if (nested_fields[n_col]['type'] === 'RECORD') {
-                    let double_nested_fields = nested_fields[n_col]['fields'];
-                    for (let nn_col = 0; nn_col < double_nested_fields.length; nn_col++) {
-                        schema_field_names_str += (in_html ? '<th>' : '') + schema_fields[col]['name'] + '.'
-                            + nested_fields[n_col]['name'] + '.'
-                            + double_nested_fields[nn_col]['name']
-                            + (in_html ? '</th>' : ', ');
+    if (schema_fields) {
+        for (let col = 0; col < schema_fields.length; col++) {
+            if (schema_fields[col]['type'] === 'RECORD') {
+                let nested_fields = schema_fields[col]['fields'];
+                for (let n_col = 0; n_col < nested_fields.length; n_col++) {
+                    if (nested_fields[n_col]['type'] === 'RECORD') {
+                        let double_nested_fields = nested_fields[n_col]['fields'];
+                        for (let nn_col = 0; nn_col < double_nested_fields.length; nn_col++) {
+                            schema_field_names_str += (in_html ? '<th>' : '') + schema_fields[col]['name'] + '.'
+                                + nested_fields[n_col]['name'] + '.'
+                                + double_nested_fields[nn_col]['name']
+                                + (in_html ? '</th>' : ', ');
+                        }
+                    } else {
+                        schema_field_names_str += (in_html ? '<th>' : '') + schema_fields[col]['name'] + '.' + nested_fields[n_col]['name'] + (in_html ? '</th>' : ', ');
                     }
-                } else {
-                    schema_field_names_str += (in_html ? '<th>' : '') + schema_fields[col]['name'] + '.' + nested_fields[n_col]['name'] + (in_html ? '</th>' : ', ');
-                }
 
+                }
+            } else {
+                schema_field_names_str += (in_html ? '<th>' : '') + schema_fields[col]['name'] + (in_html ? '</th>' : ', ');
             }
-        } else {
-            schema_field_names_str += (in_html ? '<th>' : '') + schema_fields[col]['name'] + (in_html ? '</th>' : ', ');
         }
-    }
-    if (schema_field_names_str.substring(-2) === ', ') { // remove the last comma
-        schema_field_names_str = schema_field_names_str.slice(0, -2);
+        if (schema_field_names_str.substring(-2) === ', ') { // remove the last comma
+            schema_field_names_str = schema_field_names_str.slice(0, -2);
+        }
     }
     return schema_field_names_str;
 };
