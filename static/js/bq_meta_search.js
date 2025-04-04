@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 2024, Institute for Systems Biology
+ * Copyright 2025, Institute for Systems Biology
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,20 +30,24 @@ $(document).ready(function () {
         },
         buttons: [
             {
-                collectionTitle: '<i class="fa fa-sliders" style="margin-right: 5px;"></i>Toggle Columns',
+                className:'reset-btn',
+                text: '<i class="fa-solid fa-rotate-left"></i> Reset All Filters',
+            },
+            {
+                collectionTitle: 'Select Columns to Display</span>',
                 extend: 'colvis',
-                text: '<i class="fa fa-cog" style="margin-right: 5px;"></i> Columns <span class="caret"></span>',
+                text: '<i class="fa-solid fa-sliders"></i> Columns <span class="caret"></span>',
                 columns: '.colvis-toggle',
                 postfixButtons: [
                     {
                         extend: 'colvisRestore',
-                        text: '<i class="fa fa-undo" style="margin-right: 5px;"></i> Restore'
+                        text: '<i class="fa-solid fa-rotate-left"></i> Restore'
                     }
                 ]
             },
             {
                 extend: 'csvHtml5',
-                text: '<i class="fa fa-download" style="margin-right: 5px;"></i> CSV Download',
+                text: '<i class="fa-solid fa-download"></i> CSV Download',
                 title: 'bq-metadata',
                 exportOptions: {
                     columns: ':not(".no-export")'
@@ -52,20 +56,65 @@ $(document).ready(function () {
         ],
         columns: [
             {
-                "className": 'details-control no-export',
+                "className": 'no-export',
                 "orderable": false,
                 "data": null,
                 "defaultContent": '',
-                "createdCell": function (cell) {
-                    $(cell).attr('title', 'View Table Details');
+                'render': function (data, type) {
+                    if (type === 'display') {
+                        return '<a class="px-0 details-control rounded badge" title="View Table Details"><i class="plus-control px-1 fa-solid fa-plus"></i><i class="minus-control px-1 fa-solid fa-minus" style="display: none;"></i></a>'
+                    }
                 }
             },
             {
                 'name': 'friendlyName',
-                'data': function (data, type) {
+                'data': function (data) {
                     return (data.friendlyName ? data.friendlyName : (data.tableReference.datasetId + '-' + data.tableReference.tableId)).toUpperCase();
                 },
                 'className': 'label-filter colvis-toggle'
+            },
+            {
+                'data': function (row) {
+                    return {
+                        id: row.id.split(/[.:]/).join('/'),
+                        access: row.labels ? (row.labels.access ? row.labels.access : '') : '',
+                        link: format_bq_gcp_console_link(row.tableReference)
+                    };
+                },
+                'render': function (data, type) {
+                    if (type === 'display') {
+                        let preview_btn_html;
+                        let gcp_btn_html;
+                        if (data.access && data.access === 'controlled') {
+                            preview_btn_html = '<div title="Unavailable for Controlled Access Data"><div class="tbl-preview disabled"></div></div>';
+                            // return '<div title="Unavailable for Controlled Access Data"><div class="tbl-preview disabled"></div></div>';
+
+                            // if (data.access && data.access === 'open') {
+                            //     if(user_is_authenticated){
+                            //         if(user_is_ca_authorized){
+                            //             return '<div class="tbl-preview" title="Preview Table"><i class="preview-loading fa fa-circle-o-notch fa-spin" style="display: none; color:#19424e;" aria-hidden="true"></i></div>';
+                            //         }
+                            //         else{
+                            //             return '<div title="You do not have access to this table."><div class="tbl-preview disabled"></div></div>';
+                            //         }
+                            //     }
+                            //     else{
+                            //         return '<div title="Please sign in to view"><div class="tbl-preview disabled"></div></div>';
+                            //     }
+                        } else {
+                            preview_btn_html = '<a class="stacked-badge-btn tbl-preview badge rounded-pill bqmeta-outline-badge" title="Open in Google Cloud Console"><i class="preview-loading fa-solid fa-circle-notch fa-spin" style="display: none;" aria-hidden="true"></i><i class="preview-icon fa-solid fa-magnifying-glass"></i> PREVIEW</a>';
+                        }
+                        gcp_btn_html = '<a class="stacked-badge-btn open-gcp-btn badge rounded-pill bqmeta-outline-badge" data-gcpurl="'
+                            + data.link
+                            + '" title="Open in Google Cloud Console"><i class="fa-solid fa-cloud"></i> OPEN BQ</a>'
+                        return preview_btn_html + '</br>'+ gcp_btn_html;
+                    } else {
+                        return data;
+                    }
+                },
+                'className': 'no-export',
+                'searchable': false,
+                'orderable': false
             },
             {
                 'className': 'colvis-toggle',
@@ -83,8 +132,9 @@ $(document).ready(function () {
                     if (data.table_version){
                         html_version = data.table_version;
                         let num_vers = data.releases ? Object.keys(data.releases).length:0;
-                        let ver_clss = num_vers ? 'view-versions me-2': 'me-4';
-                        html_version = '<span class="'+ver_clss+'">'+html_version+'</span>';
+                        let ver_cls = num_vers ? 'view-versions me-2': 'me-4';
+                        let btn_title = num_vers ? 'View Version History':'';
+                        html_version = '<span title="'+btn_title+'" class="'+ver_cls+'">'+html_version+'</span>';
                         html_version += '</br>('+data.type+')';
                     }
 
@@ -220,12 +270,31 @@ $(document).ready(function () {
                 },
                 'searchable': false
             },
-
             {
                 'className': 'useful-join-detail colvis-toggle',
                 'name': 'usefulJoins',
                 'data': function (data) {
                     return data.usefulJoins;
+                    // return [
+                    //     {
+                    //         "title": "Clinical and Biospecimen Data",
+                    //         "description": "This query displays CCLE clinical and biospecimen records.",
+                    //         "tables": [
+                    //             "isb-cgc-bq:CCLE.clinical_current"
+                    //         ],
+                    //         "sql": "#Retrieve all CCLE clinical cases. Using the LEFT JOIN, if biospecimen records exist for them, get them also.\nSELECT clin.case_barcode, clin.case_gdc_id, clin.project_short_name, clin.site_primary,\n       biospec.sample_barcode, biospec.sample_gdc_id  \nFROM `isb-cgc-bq.CCLE.clinical_current` clin\nLEFT JOIN `isb-cgc-bq.CCLE.biospecimen_current` biospec\nON clin.case_barcode = biospec.case_barcode\nORDER BY clin.case_barcode, biospec.sample_barcode",
+                    //         "condition": "clin.case_barcode = biospec.case_barcode"
+                    //     },
+                    //     {
+                    //         "title": "Counting Samples per Case",
+                    //         "description": "This query finds all cases having more than one sample.",
+                    //         "tables": [
+                    //             "isb-cgc-bq:CCLE.clinical_current"
+                    //         ],
+                    //         "sql": "#Find all cases having more than one sample\nSELECT clin.case_barcode, Count(biospec.sample_barcode) as Sample_Count\nFROM `isb-cgc-bq.CCLE.clinical_current` clin\nLEFT JOIN `isb-cgc-bq.CCLE.biospecimen_current` biospec\nON clin.case_barcode = biospec.case_barcode\nGROUP BY clin.case_barcode\nHAVING Sample_Count > 1\nORDER BY clin.case_barcode",
+                    //         "condition": "clin.case_barcode = biospec.case_barcode"
+                    //     }
+                    // ];
                 },
                 'render': function (data, type) {
                     let num_joins = data ? data.length: 0;
@@ -233,43 +302,6 @@ $(document).ready(function () {
                         '<div class="text-center"><a title="View List of Examples" class="useful-join-detail badge rounded-pill bqmeta-outline-badge">' + num_joins + '</a></div>';
                     return display;
                 }
-            },
-            {
-                'name': 'preview',
-                'data': function (row) {
-                    return {
-                        id: row.id.split(/[.:]/).join('/'),
-                        access: row.labels ? (row.labels.access ? row.labels.access : '') : ''
-                    };
-                },
-                'render': function (data, type) {
-                    if (type === 'display') {
-                        if (data.access && data.access === 'controlled') {
-                            return '<div title="Unavailable for Controlled Access Data"><div class="tbl-preview disabled"></div></div>';
-
-                            // if (data.access && data.access === 'open') {
-                            //     if(user_is_authenticated){
-                            //         if(user_is_ca_authorized){
-                            //             return '<div class="tbl-preview" title="Preview Table"><i class="preview-loading fa fa-circle-o-notch fa-spin" style="display: none; color:#19424e;" aria-hidden="true"></i></div>';
-                            //         }
-                            //         else{
-                            //             return '<div title="You do not have access to this table."><div class="tbl-preview disabled"></div></div>';
-                            //         }
-                            //     }
-                            //     else{
-                            //         return '<div title="Please sign in to view"><div class="tbl-preview disabled"></div></div>';
-                            //     }
-                        } else {
-                            return '<div class="tbl-preview" title="Preview Table"><i class="preview-loading fa fa-circle-o-notch fa-spin" style="display: none; color:#19424e;" aria-hidden="true"></i></div>';
-                        }
-                    } else {
-                        return data;
-                    }
-
-                },
-                'className': 'no-export',
-                'searchable': false,
-                'orderable': false
             },
             {
                 'name': 'description',
@@ -301,23 +333,6 @@ $(document).ready(function () {
                     return format_schema_field_names(row.schema.fields ? row.schema.fields : [], false);
                 },
                 'visible': false
-            },
-            {
-                // "name": "gcpLink",
-                "class": "text-center no-export",
-                "searchable": false,
-                "data": function (data) {
-                    return format_bq_gcp_console_link(data.tableReference);
-                },
-                "render": function (data, type) {
-                    return type === 'display' ?
-                        '<a class="open-gcp-btn" data-gcpurl="'
-                        + data
-                        + '" title="Open in Google Cloud Console"><svg fill="none" fill-rule="evenodd" height="15" viewBox="0 0 32 32" width="15" xmlns="http://www.w3.org/2000/svg" fit="" preserveAspectRatio="xMidYMid meet" focusable="false"><path d="M8.627 14.358v3.69c.58.998 1.4 1.834 2.382 2.435v-6.125H8.62z" fill="#19424e"></path><path d="M13.044 10.972v10.54c.493.073.998.12 1.516.12.473 0 .934-.042 1.386-.104V10.972h-2.902z" fill="#3A79B8"></path><path d="M18.294 15.81v4.604a6.954 6.954 0 0 0 2.384-2.556v-2.05h-2.384zm5.74 6.233l-1.99 1.992a.592.592 0 0 0 0 .836L27 29.83c.23.23.606.23.836 0l1.992-1.99a.594.594 0 0 0 0-.837l-4.957-4.956a.593.593 0 0 0-.83 0" fill="#3A79B8"></path><path d="M14.615 2C7.648 2 2 7.648 2 14.615 2 21.582 7.648 27.23 14.615 27.23c6.966 0 12.614-5.648 12.614-12.615C27.23 7.648 21.58 2 14.61 2m0 21.96a9.346 9.346 0 0 1-9.346-9.345 9.347 9.347 0 1 1 9.346 9.346" fill="#3A79B8"></path></svg></a>'
-                        : data;
-
-                },
-                "orderable": false
             }
         ],
         serverSide: false,
@@ -328,6 +343,10 @@ $(document).ready(function () {
         },
         initComplete: function (settings, json) {
             $('.dt-buttons').removeClass('btn-group');
+            let show_details = (selected_filters['show_details'] == 'true');
+            if (show_details & $('a.details-control').length>0){
+                $('a.details-control').first().click();
+            }
             window.history.pushState(null, 'BigQuery Table Search', query_param_url);
         },
         drawCallback: function (settings) {
@@ -336,23 +355,7 @@ $(document).ready(function () {
         }
 
     });
-    table.on('buttons-action', function (e, buttonApi, dataTable, node, config) {
-        if (buttonApi.text() == 'Version') {
-            hide_open_child_rows(dataTable, '.shown.versions-shown','shown, versions-shown');
-        } else if (buttonApi.text() == 'Example Joins') {
-            hide_open_child_rows(dataTable, '.shown.useful-join-shown','shown, useful-join-shown');
-        }
-    });
-    let hide_open_child_rows = function (dt, row_selector, row_classes) {
-        dt.rows(row_selector).every(function () {
-                let row = this;
-                if (row.child.isShown()) {
-                    row.child.hide();
-                    $(this.node()).removeClass(row_classes);
-                }
-            }
-        );
-    };
+
     let updateSearch = function () {
         let filter_arr = [];
         $('.bq-filter').each(function () {
@@ -427,39 +430,22 @@ $(document).ready(function () {
 
     $('#bqmeta').find('tbody').on('click', 'td .tbl-preview', function () {
         let td = $(this).closest('td');
-        let tbl_path = table.cell(td).data().id;
         let tr = $(this).closest('tr');
         let row = table.row(tr);
-        if (row.child.isShown() && tr.hasClass('preview-shown')) {
-            // This row is already open - close it
-            row.child.hide();
-            tr.removeClass('shown preview-shown');
+        let table_path = table.cell(td).data().id
+        if (row.child.isShown()) {
+            let reopen = !tr.hasClass('preview-shown');
+            $('div.accordionSlider', row.child()).slideUp(400, function () {
+                row.child.hide();
+                tr.removeClass('shown details-shown preview-shown useful-join-shown versions-shown');
+                tr.find('i.minus-control').hide();
+                tr.find('i.plus-control').show();
+                if (reopen){
+                    show_tbl_preview(row, tr, td, table_path);
+                }
+            });
         } else {
-            if (!td.data('preview-data')) {
-                //check if the preview data is stored
-                //if not get the data and store it
-                $.ajax({
-                    type: "GET",
-                    url: "/get_tbl_preview/" + tbl_path + "/",
-                    // url: BASE_URL + "/get_tbl_preview/" + tbl_path + "/",
-                    beforeSend: function () {
-                        td.find('.preview-loading').show();
-                    },
-                    error: function (result) {
-                        let msg = 'There has been an error retrieving the preview table.';
-                        if (result.responseJSON && result.responseJSON.message) {
-                            msg = result.responseJSON.message;
-                        }
-                        show_tbl_preview(row, tr, td, msg);
-                    },
-                    success: function (data) {
-                        td.data('preview-data', data);
-                        show_tbl_preview(row, tr, td);
-                    }
-                });
-            } else { // use the stored data to display
-                show_tbl_preview(row, tr, td);
-            }
+            show_tbl_preview(row, tr, td, table_path);
         }
     });
 
@@ -467,98 +453,69 @@ $(document).ready(function () {
         let td = $(this).closest('td');
         let tr = $(this).closest('tr');
         let row = table.row(tr);
-        if (row.child.isShown() && tr.hasClass('versions-shown')) {
-            // This row is already open - close it
-            row.child.hide();
-            tr.removeClass('shown versions-shown');
+        if (row.child.isShown()) {
+            let reopen = !tr.hasClass('versions-shown');
+            $('div.accordionSlider', row.child()).slideUp(400, function () {
+                row.child.hide();
+                tr.removeClass('shown details-shown preview-shown useful-join-shown versions-shown')
+                tr.find('i.minus-control').hide();
+                tr.find('i.plus-control').show();
+                if (reopen){
+                    show_tbl_versions(row, tr, table.cell(td).data().releases);
+                }
+            });
         } else {
             show_tbl_versions(row, tr, table.cell(td).data().releases);
-            // show_tbl_versions(row, tr, table.cell(td).data());
         }
     });
+
 
     $('#bqmeta').find('tbody').on('click', 'td .useful-join-detail', function () {
         let tr = $(this).closest('tr');
         let td = $(this).closest('td');
         let row = table.row(tr);
         let row_data = row.data();
+        let tableReference = row_data['tableReference']
+        let friendlyName = row_data['friendlyName']
         let joins_data = table.cell(td).data();
-        if (row.child.isShown() && tr.hasClass('useful-join-shown')) {
-            // This row is already open - close it
-            row.child.hide();
-            tr.removeClass('shown useful-join-shown');
+        let reopen = !tr.hasClass('useful-join-shown');
+        if (row.child.isShown()) {
+            $('div.accordionSlider', row.child()).slideUp(400, function () {
+                row.child.hide();
+                tr.removeClass('shown details-shown preview-shown useful-join-shown versions-shown');
+                tr.find('i.minus-control').hide();
+                tr.find('i.plus-control').show();
+                if (reopen) {
+                    show_useful_joins(row, tr, friendlyName, tableReference, joins_data);
+                }
+            });
         } else {
             // Open this row
-            row.child(format_useful_join_details(joins_data)).show();
-            tr.next().find('.useful-join-view-btn').each(function (index) {
-                let this_join_data = joins_data[index];
-                this_join_data['tableName'] = row_data['friendlyName'];
-                this_join_data['tableId'] = formatFullId(row_data['tableReference'], false);
-                $(this).data(this_join_data);
-            });
-
-            tr.next().find('.useful-join-view-btn').on('click', function () {
-                let join_data = $(this).data();
-                let tables = '';
-                join_data['tables'].forEach(function (value, i) {
-                    let joinedTableRefs = get_joined_table_refs(value);
-                    tables += ('<li><a class="table-link" href="' + joinedTableRefs['table_url'] + '" title="Open in new tab">' + joinedTableRefs['formatted_id'] + '</a></li>');
-                });
-                let sql_query = join_data['sql'].replace('\n', '\n<br>');
-                let dialog_content =
-                    '<div class="fw-bold fs-5">' + join_data['title'] + '</div>' +
-                    '<div>' + join_data['description'] + '</div>' +
-                    '<div class="fw-bold mt-3">Joined Table(s):</div><div><ul>' + tables + '</ul></div>' +
-                    '<div class="fw-bold">SQL Statement</div>' +
-                    '<div><pre><code class="language-sql query-body">' + sql_query + '</code></pre></div>' +
-                    '<div class="text-end"><button class="copy-query-btn btn" title="Copy to Clipboard">' +
-                    '<i class="fa fa-clipboard me-1" aria-hidden="true"></i>Copy to Clipboard</button></div>' +
-                    '<div class="fw-bold">Joined Condition</div><pre>' + join_data['condition'] + '</pre>';
-
-                $('#useful-join-view-modal').find('.modal-body').html(dialog_content);
-
-                Prism.highlightAll();
-
-                $(".copy-query-btn").on('click', function () {
-                    copy_to_clipboard($(this).parents('.modal-body').find('.query-body'));
-                });
-
-                $('#useful-join-view-modal').find('.modal-sub-title').html(join_data['tableName']);
-                $('#useful-join-view-modal').find('.modal-sub-sub-title').html(join_data['tableId']);
-                $('#useful-join-view-modal').modal('show');
-            });
-
-            set_gcp_open_btn($(tr).next('tr').find('.detail-table'));
-            tr.addClass('shown useful-join-shown');
-            tr.removeClass('preview-shown');
-            tr.removeClass('details-shown');
-            tr.removeClass('versions-shown');
+            show_useful_joins(row, tr, friendlyName, tableReference, joins_data);
         }
     });
 
     // Add event listener for opening and closing details
-    $('#bqmeta').find('tbody').on('click', 'td.details-control', function () {
+    $('#bqmeta').find('tbody').on('click', 'a.details-control', function () {
         let tr = $(this).closest('tr');
         let row = table.row(tr);
-        if (row.child.isShown() && tr.hasClass('details-shown')) {
-            // This row is already open - close it
-            row.child.hide();
-            tr.removeClass('shown details-shown');
-        } else {
-            // Open this row
-            row.child(format_tbl_details(row.data())).show();
-            $(".copy-btn").on('click', function () {
-                copy_to_clipboard($(this).siblings('.full_id_txt'));
+        if (row.child.isShown()) {
+            let reopen = !tr.hasClass('details-shown');
+            $('div.accordionSlider', row.child()).slideUp(400, function () {
+                row.child.hide();
+                tr.removeClass('shown details-shown preview-shown useful-join-shown versions-shown')
+                tr.find('i.minus-control').hide();
+                tr.find('i.plus-control').show();
+                if (reopen) {
+                    show_tbl_details(row, tr);
+                }
             });
-            set_gcp_open_btn($(tr).next('tr').find('.detail-table'));
-            tr.addClass('shown details-shown');
-            tr.removeClass('preview-shown');
-            tr.removeClass('useful-join-shown');
-            tr.removeClass('versions-shown');
+        } else {
+            show_tbl_details(row, tr)
         }
     });
 
-    $('#bq-meta-form').find('i.fa-info-circle').tooltip();
+    $('#bq-meta-form').find('i.fa-circle-info').tooltip();
 
     $(".autocomplete_select_box").chosen({
         no_results_text: "Oops, nothing found!",
@@ -619,29 +576,112 @@ let is_quoted = function (fieldVal) {
 };
 
 
-let show_tbl_versions = function (row, tr, data) {
-    row.child(format_tbl_versions(data, row.data().id.replace(':','.'))).show();
-    tr.removeClass('details-shown');
-    tr.removeClass('useful-join-shown');
-    tr.removeClass('preview-shown');
-    tr.addClass('shown versions-shown');
+let show_tbl_details = function (row, tr) {
+    row.child(format_tbl_details(row.data())).show();
+    // $(".copy-btn").on('click', function () {
+    //     copy_to_clipboard($(this).siblings('.full_id_txt'));
+    // });
+    // set_gcp_open_btn($(tr).next('tr').find('.detail-table'));
+    tr.addClass('shown details-shown');
+    $('div.accordionSlider', row.child()).slideDown();
+    tr.find('i.minus-control').show();
+    tr.find('i.plus-control').hide();
 };
 
-let show_tbl_preview = function (row, tr, td, err_mssg) {
+
+let show_tbl_versions = function (row, tr, data) {
+    row.child(format_tbl_versions(data, row.data().id.replace(':','.'))).show();
+    tr.addClass('shown versions-shown');
+    $('div.accordionSlider', row.child()).slideDown();
+};
+
+let show_tbl_preview = function(row, tr, td, tbl_path) {
+    // let tbl_path = table.cell(td).data().id;
+    if (!td.data('preview-data')) {
+        //check if the preview data is stored
+        //if not get the data and store it
+        $.ajax({
+            type: "GET",
+            url: "/get_tbl_preview/" + tbl_path + "/",
+            beforeSend: function () {
+                td.find('.preview-loading').show();
+                td.find('.preview-icon').hide();
+
+            },
+            error: function (result) {
+                let msg = 'There has been an error retrieving the preview table.';
+                if (result.responseJSON && result.responseJSON.message) {
+                    msg = result.responseJSON.message;
+                }
+                show_loaded_preview(row, tr, td, msg);
+            },
+            success: function (data) {
+                td.data('preview-data', data);
+                show_loaded_preview(row, tr, td);
+            }
+        });
+    } else { // use the stored data to display
+        show_loaded_preview(row, tr, td);
+    }
+};
+
+let show_loaded_preview = function (row, tr, td, err_mssg) {
     if (err_mssg) {
         row.child('<div class="text-end"><i class="fa fa-exclamation-triangle" style="margin-right: 5px;"></i>' + err_mssg + '</div>').show();
     } else {
         let tbl_data = td.data('preview-data');
         row.child(format_tbl_preview(tbl_data['schema_fields'], tbl_data['tbl_data'])).show();
     }
-    tr.removeClass('details-shown');
-    tr.removeClass('useful-join-shown');
-    tr.removeClass('versions-shown');
-
+    // tr.removeClass('details-shown');
+    // tr.removeClass('useful-join-shown');
+    // tr.removeClass('versions-shown');
     td.find('.preview-loading').hide();
+    td.find('.preview-icon').show();
+
     tr.addClass('shown preview-shown');
+    $('div.accordionSlider', row.child()).slideDown();
 };
 
+let show_useful_joins = function (row, tr, friendlyName, tableReference, joins_data) {
+    row.child(format_useful_join_details(joins_data)).show();
+    tr.next().find('.useful-join-view-btn').each(function (index) {
+        let this_join_data = joins_data[index];
+        this_join_data['tableName'] = friendlyName;//row_data['friendlyName'];
+        this_join_data['tableId'] = formatFullId(tableReference, false);//row_data['tableReference'], false);
+        $(this).data(this_join_data);
+    });
+
+    tr.next().find('.useful-join-view-btn').on('click', function () {
+        let join_data = $(this).data();
+        let tables = '';
+        join_data['tables'].forEach(function (value, i) {
+            let joinedTableRefs = get_joined_table_refs(value);
+            tables += ('<li><a class="table-link" href="' + joinedTableRefs['table_url'] + '" title="Open in new tab">' + joinedTableRefs['formatted_id'] + '</a></li>');
+        });
+        let sql_query = join_data['sql'].replace('\n', '\n<br>');
+        let dialog_content =
+            '<div class="fw-bold fs-5">' + join_data['title'] + '</div>' +
+            '<div>' + join_data['description'] + '</div>' +
+            '<div class="fw-bold mt-3">Joined Table(s):</div><div><ul>' + tables + '</ul></div>' +
+            '<div class="fw-bold">SQL Statement</div>' +
+            '<div class="code-bg p-2"><div class="float-end"><button class="copy-query-btn btn" title="Copy to Clipboard">' +
+            '<i class="fa-solid fa-copy"></i> Copy</button></div>' +
+            '<pre><code class="language-sql query-body">' + sql_query + '</code></pre>' +
+            '</div><div class="mt-2 fw-bold">Joined Condition</div><div class="p-2"><pre>' + join_data['condition'] + '</pre></div>';
+
+        $('#useful-join-view-modal').find('.modal-body').html(dialog_content);
+        Prism.highlightAll();
+        $(".copy-query-btn").on('click', function () {
+            copy_to_clipboard($(this).parents('.modal-body').find('.query-body'));
+        });
+        $('#useful-join-view-modal').find('.modal-sub-title').html(join_data['tableName']);
+        $('#useful-join-view-modal').find('.modal-sub-sub-title').html(join_data['tableId']);
+        $('#useful-join-view-modal').modal('show');
+    });
+    set_gcp_open_btn($(tr).next('tr').find('.detail-table'));
+    tr.addClass('shown useful-join-shown');
+    $('div.accordionSlider', row.child()).slideDown();
+};
 
 let format_bq_gcp_console_link = function (tbl_ref) {
     return 'https://console.cloud.google.com/bigquery'
@@ -654,8 +694,9 @@ let format_bq_gcp_console_link = function (tbl_ref) {
 
 // Useful join table
 let format_useful_join_details = function (d) {
-    let join_table = '<div><table class="useful-join-table">';
-    join_table += '<thead><tr><th style="width:200px">Join Subject</th><th style="width:400px">Joined Tables</th><th>View</th></tr></thead>';
+    let join_table = '<div class="accordionSlider"><table class="useful-join-table">';
+    join_table += '<thead><tr><th>Join Subject</th><th>Joined Tables</th><th></th></tr></thead>';
+    // join_table += '<thead><tr><th style="width:200px">Join Subject</th><th style="width:400px">Joined Tables</th><th></th></tr></thead>';
     join_table += '<tbody>';
     d.forEach(join_info => {
         let tables = [];
@@ -666,7 +707,7 @@ let format_useful_join_details = function (d) {
         join_table += '<tr>' +
             '<td>' + join_info['title'] + '</td>' +
             '<td>' + tables.join('<br>') + '</td>' +
-            '<td><button class="useful-join-view-btn open-gcp-btn">View Details</button></td>' +
+            '<td><button class="badge useful-join-view-btn open-gcp-btn">View Details</button></td>' +
             '</tr>';
     });
     join_table += '</tbody></table></div>';
@@ -676,7 +717,7 @@ let format_useful_join_details = function (d) {
 
 let get_joined_table_refs = function (full_table_id) {
     let tableRefs = full_table_id.split(/[:.]/);
-    let table_url = '/search?projectId=\'' + tableRefs[0] + '\'&datasetId=\'' + tableRefs[1] + '\'&tableId=\'' + tableRefs[2]+'\'';
+    let table_url = '/search?show_details=true&projectId=\'' + tableRefs[0] + '\'&datasetId=\'' + tableRefs[1] + '\'&tableId=\'' + tableRefs[2]+'\'';
     let formatted_id = tableRefs.join('.');
     return {
         'table_url': table_url,
@@ -687,23 +728,24 @@ let get_joined_table_refs = function (full_table_id) {
 
 let format_tbl_details = function (d) {
     // `d` is the original data object for the row
-    return '<table class="detail-table">' +
+    return '<div class="accordionSlider"><table class="detail-table">' +
         '<td style="vertical-align:top;"><strong>Full ID</strong></td>' +
         '<td>' +
         '<span class="full_id_txt">' + formatFullId(d.tableReference, false) +
         '</span>' +
-        '<button class="copy-btn" title="Copy to Clipboard">' +
-        '<i class="fa fa-clipboard me-1" aria-hidden="true"></i>' +
-        'COPY' +
-        '</button>' +
-        '<button data-gcpurl="' + format_bq_gcp_console_link(d.tableReference) + '" class="open-gcp-btn" style="margin-left: 0;" title="Open in Google Cloud Console">' +
-        '<svg id="BIGQUERY_SECTION_cache12" fill="none" fill-rule="evenodd" height="11" viewBox="0 0 32 32" width="11" xmlns="http://www.w3.org/2000/svg" fit="" preserveAspectRatio="xMidYMid meet" focusable="false">' +
-        '<path d="M8.627 14.358v3.69c.58.998 1.4 1.834 2.382 2.435v-6.125H8.62z" fill="#19424e"></path>' +
-        '<path d="M13.044 10.972v10.54c.493.073.998.12 1.516.12.473 0 .934-.042 1.386-.104V10.972h-2.902z" fill="#3A79B8"></path>' +
-        '<path d="M18.294 15.81v4.604a6.954 6.954 0 0 0 2.384-2.556v-2.05h-2.384zm5.74 6.233l-1.99 1.992a.592.592 0 0 0 0 .836L27 29.83c.23.23.606.23.836 0l1.992-1.99a.594.594 0 0 0 0-.837l-4.957-4.956a.593.593 0 0 0-.83 0" fill="#3A79B8"></path>' +
-        '<path d="M14.615 2C7.648 2 2 7.648 2 14.615 2 21.582 7.648 27.23 14.615 27.23c6.966 0 12.614-5.648 12.614-12.615C27.23 7.648 21.58 2 14.61 2m0 21.96a9.346 9.346 0 0 1-9.346-9.345 9.347 9.347 0 1 1 9.346 9.346" fill="#3A79B8"></path></svg>' +
-        'OPEN' +
-        '</button>' +
+        // '<a class="ms-1 copy-btn" title="Copy to clipboard">' +
+
+        // '<i class="fa-solid fa-copy"></i>' +
+        // '<i class="fa fa-clipboard me-1" aria-hidden="true"></i>' +
+        // '</a>' +
+        // '<button data-gcpurl="' + format_bq_gcp_console_link(d.tableReference) + '" class="open-gcp-btn" style="margin-left: 0;" title="Open in Google Cloud Console">' +
+        // '<svg id="BIGQUERY_SECTION_cache12" fill="none" fill-rule="evenodd" height="11" viewBox="0 0 32 32" width="11" xmlns="http://www.w3.org/2000/svg" fit="" preserveAspectRatio="xMidYMid meet" focusable="false">' +
+        // '<path d="M8.627 14.358v3.69c.58.998 1.4 1.834 2.382 2.435v-6.125H8.62z" fill="#19424e"></path>' +
+        // '<path d="M13.044 10.972v10.54c.493.073.998.12 1.516.12.473 0 .934-.042 1.386-.104V10.972h-2.902z" fill="#3A79B8"></path>' +
+        // '<path d="M18.294 15.81v4.604a6.954 6.954 0 0 0 2.384-2.556v-2.05h-2.384zm5.74 6.233l-1.99 1.992a.592.592 0 0 0 0 .836L27 29.83c.23.23.606.23.836 0l1.992-1.99a.594.594 0 0 0 0-.837l-4.957-4.956a.593.593 0 0 0-.83 0" fill="#3A79B8"></path>' +
+        // '<path d="M14.615 2C7.648 2 2 7.648 2 14.615 2 21.582 7.648 27.23 14.615 27.23c6.966 0 12.614-5.648 12.614-12.615C27.23 7.648 21.58 2 14.61 2m0 21.96a9.346 9.346 0 0 1-9.346-9.345 9.347 9.347 0 1 1 9.346 9.346" fill="#3A79B8"></path></svg>' +
+        // 'OPEN' +
+        // '</button>' +
 
         '</td>' +
         '</tr><tr>' +
@@ -721,7 +763,7 @@ let format_tbl_details = function (d) {
         '</tr><tr>' +
         '<td><strong>Labels</strong></td>' +
         '<td>' + tokenize_labels(d.labels) + '</td>' +
-        '</tr></table>';
+        '</tr></table></div>';
 };
 
 
@@ -737,7 +779,7 @@ let copy_to_clipboard = function (el) {
 const sortAlphaNum = (a, b) => a.localeCompare(b, 'en', {numeric: true})
 
 let format_tbl_versions = function (versions_data, row_table_id) {
-    let html_tbl = '<div><table class="versions-table">';
+    let html_tbl = '<div class="accordionSlider"><table class="versions-table">';
     html_tbl += '<tr><th class="px-2">Version</th><th class="px-2">Table</th><th class="px-2">Type</th></tr>';
     for (let d of Object.keys(versions_data).sort(sortAlphaNum).reverse()) {
         html_tbl += '<tr><td class="px-2">' + d + (versions_data[d].is_latest ? "<span class='ms-2 badge rounded-pill bg-secondary'>Latest</span>" : "");
@@ -746,7 +788,7 @@ let format_tbl_versions = function (versions_data, row_table_id) {
         let type_list = [];
         for (let t of versions_data[d].tables) {
             let refs = get_joined_table_refs(t);
-            table_link_list.push((row_table_id == refs.formatted_id ? '<span class="text-secondary fw-bold pe-1">&rarr;</span>':'<span class="pe-2">&nbsp;&nbsp;</span>')+'<a class="table-link" rel="noreferrer" target="_blank" href="' + refs.table_url + '">' + refs.formatted_id + '</a>');
+            table_link_list.push((row_table_id == refs.formatted_id ? '<span class="text-secondary"><i class="fa-solid fa-arrow-right pe-1"></i></span>':'<span class="pe-2">&nbsp;&nbsp;</span>')+'<a class="table-link" rel="noreferrer" target="_blank" href="' + refs.table_url + '">' + refs.formatted_id + '</a>');
             type_list.push(refs.formatted_id.endsWith('_current') ? 'Always Newest': 'Stable');
         }
         html_tbl += table_link_list.join('<br/>');
@@ -759,7 +801,7 @@ let format_tbl_versions = function (versions_data, row_table_id) {
 };
 
 let format_tbl_preview = function (schema_fields, rows) {
-    let html_tbl = '<div class="preview-table-container"><table class="preview-table">';
+    let html_tbl = '<div class="accordionSlider preview-table-container"><table class="preview-table">';
     html_tbl += '<tr>';
     html_tbl += format_schema_field_names(schema_fields, true);
     html_tbl += '</tr>';

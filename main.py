@@ -58,7 +58,7 @@ def search(status=None):
         rq_meth = request.args
     for f in ['projectId', 'datasetId', 'tableId', 'friendlyName', 'description', 'field_name', 'labels',
               'include_always_newest', 'status', 'category', 'experimental_strategy', 'program', 'source', 'data_type',
-              'reference_genome']:
+              'reference_genome', 'show_details']:
         if rq_meth.get(f):
             selected_filters[f] = request.args.get(f).lower()
     return render_template("bq_meta_search.html", bq_filters=settings.bq_table_files['bq_filters']['file_data'],
