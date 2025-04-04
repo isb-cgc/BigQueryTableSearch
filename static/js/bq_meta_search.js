@@ -274,27 +274,27 @@ $(document).ready(function () {
                 'className': 'useful-join-detail colvis-toggle',
                 'name': 'usefulJoins',
                 'data': function (data) {
-                    // return data.usefulJoins;
-                    return [
-                        {
-                            "title": "Clinical and Biospecimen Data",
-                            "description": "This query displays CCLE clinical and biospecimen records.",
-                            "tables": [
-                                "isb-cgc-bq:CCLE.clinical_current"
-                            ],
-                            "sql": "#Retrieve all CCLE clinical cases. Using the LEFT JOIN, if biospecimen records exist for them, get them also.\nSELECT clin.case_barcode, clin.case_gdc_id, clin.project_short_name, clin.site_primary,\n       biospec.sample_barcode, biospec.sample_gdc_id  \nFROM `isb-cgc-bq.CCLE.clinical_current` clin\nLEFT JOIN `isb-cgc-bq.CCLE.biospecimen_current` biospec\nON clin.case_barcode = biospec.case_barcode\nORDER BY clin.case_barcode, biospec.sample_barcode",
-                            "condition": "clin.case_barcode = biospec.case_barcode"
-                        },
-                        {
-                            "title": "Counting Samples per Case",
-                            "description": "This query finds all cases having more than one sample.",
-                            "tables": [
-                                "isb-cgc-bq:CCLE.clinical_current"
-                            ],
-                            "sql": "#Find all cases having more than one sample\nSELECT clin.case_barcode, Count(biospec.sample_barcode) as Sample_Count\nFROM `isb-cgc-bq.CCLE.clinical_current` clin\nLEFT JOIN `isb-cgc-bq.CCLE.biospecimen_current` biospec\nON clin.case_barcode = biospec.case_barcode\nGROUP BY clin.case_barcode\nHAVING Sample_Count > 1\nORDER BY clin.case_barcode",
-                            "condition": "clin.case_barcode = biospec.case_barcode"
-                        }
-                    ];
+                    return data.usefulJoins;
+                    // return [
+                    //     {
+                    //         "title": "Clinical and Biospecimen Data",
+                    //         "description": "This query displays CCLE clinical and biospecimen records.",
+                    //         "tables": [
+                    //             "isb-cgc-bq:CCLE.clinical_current"
+                    //         ],
+                    //         "sql": "#Retrieve all CCLE clinical cases. Using the LEFT JOIN, if biospecimen records exist for them, get them also.\nSELECT clin.case_barcode, clin.case_gdc_id, clin.project_short_name, clin.site_primary,\n       biospec.sample_barcode, biospec.sample_gdc_id  \nFROM `isb-cgc-bq.CCLE.clinical_current` clin\nLEFT JOIN `isb-cgc-bq.CCLE.biospecimen_current` biospec\nON clin.case_barcode = biospec.case_barcode\nORDER BY clin.case_barcode, biospec.sample_barcode",
+                    //         "condition": "clin.case_barcode = biospec.case_barcode"
+                    //     },
+                    //     {
+                    //         "title": "Counting Samples per Case",
+                    //         "description": "This query finds all cases having more than one sample.",
+                    //         "tables": [
+                    //             "isb-cgc-bq:CCLE.clinical_current"
+                    //         ],
+                    //         "sql": "#Find all cases having more than one sample\nSELECT clin.case_barcode, Count(biospec.sample_barcode) as Sample_Count\nFROM `isb-cgc-bq.CCLE.clinical_current` clin\nLEFT JOIN `isb-cgc-bq.CCLE.biospecimen_current` biospec\nON clin.case_barcode = biospec.case_barcode\nGROUP BY clin.case_barcode\nHAVING Sample_Count > 1\nORDER BY clin.case_barcode",
+                    //         "condition": "clin.case_barcode = biospec.case_barcode"
+                    //     }
+                    // ];
                 },
                 'render': function (data, type) {
                     let num_joins = data ? data.length: 0;
