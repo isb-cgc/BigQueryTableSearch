@@ -129,6 +129,7 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
         result = {
             'message': "Exception"
         }
+        print(e)
     if status != 200:
         app.logger.error(
             f"ERROR While attempting to retrieve preview data for {proj_id}.{dataset_id}.{table_id} table: [{status}] {result['message']}")

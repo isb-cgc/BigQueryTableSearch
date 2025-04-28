@@ -420,21 +420,21 @@ button#show-btn:before {
     font-size: .85em;
     margin: 0 5px;
     padding: 0 7px;
-    border: 1px solid #ddd;
+    /*border: 1px solid #ddd;*/
     border-radius: 3px;
-    color: #2B7388;
-    background-color: white;
-    background-image: none;
+    /*color: #2B7388;*/
+    /*background-color: white;*/
+    /*background-image: none;*/
 }
 
 #bqmeta tr td table.detail-table th button i, #bqmeta tr td table.detail-table td button i {
     margin-right: 2px;
 }
 
-#bqmeta tr td table.detail-table th button:hover, #bqmeta tr td table.detail-table td button:hover {
-    color: #19424e;
-    background-color: #eeeeee;
-}
+/*#bqmeta tr td table.detail-table th button:hover, #bqmeta tr td table.detail-table td button:hover {*/
+/*    color: #19424e;*/
+/*    background-color: #eeeeee;*/
+/*}*/
 
 table.versions-table{
     margin-left: 3rem;
