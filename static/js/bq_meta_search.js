@@ -578,9 +578,9 @@ let is_quoted = function (fieldVal) {
 
 let show_tbl_details = function (row, tr) {
     row.child(format_tbl_details(row.data())).show();
-    // $(".copy-btn").on('click', function () {
-    //     copy_to_clipboard($(this).siblings('.full_id_txt'));
-    // });
+    $(".copy-btn").on('click', function () {
+        copy_to_clipboard($(this).siblings('.full_id_txt'));
+    });
     // set_gcp_open_btn($(tr).next('tr').find('.detail-table'));
     tr.addClass('shown details-shown');
     $('div.accordionSlider', row.child()).slideDown();
@@ -733,11 +733,10 @@ let format_tbl_details = function (d) {
         '<td>' +
         '<span class="full_id_txt">' + formatFullId(d.tableReference, false) +
         '</span>' +
-        // '<a class="ms-1 copy-btn" title="Copy to clipboard">' +
-
-        // '<i class="fa-solid fa-copy"></i>' +
-        // '<i class="fa fa-clipboard me-1" aria-hidden="true"></i>' +
-        // '</a>' +
+        '<button class="copy-btn btn" title="Copy to Clipboard">' +
+        '<i class="fa-solid fa-copy" aria-hidden="true"></i>' +
+        'Copy' +
+        '</button>' +
         // '<button data-gcpurl="' + format_bq_gcp_console_link(d.tableReference) + '" class="open-gcp-btn" style="margin-left: 0;" title="Open in Google Cloud Console">' +
         // '<svg id="BIGQUERY_SECTION_cache12" fill="none" fill-rule="evenodd" height="11" viewBox="0 0 32 32" width="11" xmlns="http://www.w3.org/2000/svg" fit="" preserveAspectRatio="xMidYMid meet" focusable="false">' +
         // '<path d="M8.627 14.358v3.69c.58.998 1.4 1.834 2.382 2.435v-6.125H8.62z" fill="#19424e"></path>' +
