@@ -84,13 +84,6 @@ responses:
         items:
           type: object
           properties:
-            clustering:
-              type: object
-              properties:
-                fields:
-                  type: array
-                  items:
-                    type: string
             creationTime:
               type: string
             description:
