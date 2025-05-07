@@ -1,0 +1,162 @@
+description: "Get a list of ISB-CGC hosted BigQuery tables using filters using POST method"
+tags:
+  - name: ISB-CGC BigQuery Table Search
+consumes:
+  - application/json
+produces:
+  - application/json
+summary:
+  - Finds table by various criteria
+parameters:
+  - name: body
+    in: body
+    schema:
+      type: object
+      properties:
+        status:
+          type: string
+          example: current
+        program:
+          type: string
+          example: rebc|tcga|wcdt
+        category:
+          type: string
+          example: processed_-omics_data
+        friendlyName:
+          type: string
+          example: gene expression
+        reference_genome:
+          type: string
+          example: hg38
+        source:
+          type: string
+          example: gdc
+        data_type:
+          type: string
+          example: gene_expression
+        experimental_strategy:
+          type: string
+          example: rnaseq
+    required: false
+
+responses:
+    "200":
+      description: OK
+      schema:
+        type: array
+        items:
+          type: object
+          properties:
+            clustering:
+              type: object
+              properties:
+                fields:
+                  type: array
+                  items:
+                    type: string
+            creationTime:
+              type: string
+            description:
+              type: string
+            friendlyName:
+              type: string
+            id:
+              type: string
+            labels:
+              type: object
+              properties:
+                access:
+                  type: string
+                category:
+                  type: string
+                data_type:
+                  type: string
+                experimental_strategy:
+                  type: string
+                program:
+                  type: string
+                reference_genome:
+                  type: string
+                source:
+                  type: string
+                status:
+                  type: string
+                version:
+                  type: string
+            lastModifiedTime:
+              type: string
+            numCurrentPhysicalBytes:
+              type: string
+            numRows:
+              type: string
+            schema:
+              type: object
+              properties:
+                fields:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      description:
+                        type: string
+                      mode:
+                        type: string
+                      name:
+                        type: string
+                      type:
+                        type: string
+            tableReference:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                datasetId:
+                  type: string
+                tableId:
+                  type: string
+            type:
+              type: string
+            usefulJoins:
+              type: array
+              items:
+                type: object
+                properties:
+                  condition:
+                    type: string
+                  description:
+                    type: string
+                  sql:
+                    type: string
+                  tables:
+                    type: array
+                    items:
+                      type: string
+                  title:
+                    type: string
+            versions:
+              type: object
+              properties:
+                  key:
+                    type: object
+                    properties:
+                      is_latest:
+                        type: boolean
+                      tables:
+                        type: array
+                        items:
+                          type: string
+
+    "400":
+      description: Bad request
+      schema:
+        title: Invalid input was given
+        type: object
+        example:
+          message: There was an error during the search.
+    "408":
+      description: Timeout Error
+      schema:
+        title: Query Timeout.
+        type: object
+        example:
+          message: Sorry, query job has timed out.
