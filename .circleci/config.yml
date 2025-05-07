@@ -103,6 +103,7 @@ jobs:
             - ./templates
             - ./shell
             - ./static
+            - ./api_docs
             - ./LICENSE
             - ./main.py
             - ./settings.py
