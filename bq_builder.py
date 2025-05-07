@@ -79,16 +79,19 @@ def build_join_clause(conditions, table_name):
 
 def metadata_query(req):
     if req.method == 'POST':
-        rq_meth = req.form
+        if req.form:
+            req_data = req.form
+        if req.is_json:
+            req_data = req.get_json()
     else:
-        rq_meth = req.args
+        req_data = req.args
     r_filters = ['description', 'friendlyName', 'projectId', 'datasetId', 'tableId', 'include_always_newest']
     l_filters = ['status', 'category', 'experimental_strategy', 'data_type', 'source', 'program', 'reference_genome',
                  'labels']
     f_filters = ['field_name']
-    where_clause = build_where_clause(get_conditions(rq_meth, r_filters))
-    join_clause = build_join_clause(get_conditions(rq_meth, l_filters), 'BQS_LABELS')
-    join_clause += build_join_clause(get_conditions(rq_meth, f_filters), 'BQS_SCHEMA_FIELDS')
+    where_clause = build_where_clause(get_conditions(req_data, r_filters))
+    join_clause = build_join_clause(get_conditions(req_data, l_filters), 'BQS_LABELS')
+    join_clause += build_join_clause(get_conditions(req_data, f_filters), 'BQS_SCHEMA_FIELDS')
     query_str = f'SELECT metadata FROM `{settings.BQ_METADATA_PROJ}.bqs_metadata.BQS_TABLE_REFS` AS R \n'
     query_str += join_clause
     query_str += where_clause
