@@ -21,8 +21,12 @@ from google.cloud import bigquery, logging
 from google.api_core.exceptions import BadRequest
 import bq_builder
 import settings
+import swagger_config
 import concurrent.futures
 import json
+from flasgger import Swagger
+from flasgger import swag_from
+
 
 app = Flask(__name__)
 
@@ -65,7 +69,8 @@ def search(status=None):
                            selected_filters=selected_filters,
                            bq_total_entries=settings.bq_total_entries)
 
-
+@swag_from('api_docs/search_api_get.yaml', endpoint='search_api', methods=['GET'])
+@swag_from('api_docs/search_api_post.yaml', endpoint='search_api', methods=['POST'])
 @app.route("/search_api", methods=['GET', 'POST'])
 def search_api():
     error_msg = settings.pull_metadata()
@@ -74,7 +79,6 @@ def search_api():
     filtered_meta_data = []
     try:
         query_statement = bq_builder.metadata_query(request)
-        # print(query_statement)
         bigquery_client = bigquery.Client(project=settings.BQ_METADATA_PROJ)
         query_job = bigquery_client.query(query_statement)
 
@@ -82,12 +86,18 @@ def search_api():
         filtered_meta_data = [json.loads(dict(row)['metadata']) for row in result]
     except ValueError:
         error_msg = 'An invalid query parameter was detected. Please revise your search criteria and search again.'
+        error_code = 400
     except (concurrent.futures.TimeoutError, requests.exceptions.ReadTimeout):
         error_msg = "Sorry, query job has timed out."
+        error_code = 408
     except (BadRequest, Exception) as e:
-        error_msg = "There was an error during the download process."
+        error_msg = "There was an error during the search."
+        error_code = 400
     if error_msg:
         app.logger.error(f"[ERROR] {error_msg}")
+        response = jsonify({'message': error_msg})
+        response.status_code = error_code
+        return response
     return jsonify(filtered_meta_data)
 
 
@@ -142,6 +152,6 @@ def page_not_found(e):
 
 
 settings.setup_app(app)
-
+swagger = Swagger(app, template=swagger_config.swagger_template,config=swagger_config.swagger_config)
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)

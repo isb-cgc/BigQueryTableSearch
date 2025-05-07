@@ -103,9 +103,11 @@ jobs:
             - ./templates
             - ./shell
             - ./static
+            - ./api_docs
             - ./LICENSE
             - ./main.py
             - ./settings.py
+            - ./swagger_config.py
             - ./bq_builder.py
             - ./requirements.txt
 
