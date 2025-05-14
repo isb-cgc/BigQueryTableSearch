@@ -1,0 +1,82 @@
+description: "Get a preview of an ISB-CGC table"
+tags:
+  - name: Table Search
+operationId: getTablePreview
+produces:
+  - application/json
+summary:
+  - Preview an ISB-CGC table
+parameters:
+  - name: proj_id
+    in: path
+    description: Project ID of the requested table.
+    example: isb-cgc-bq
+    schema:
+      type: string
+      required: true
+  - name: dataset_id
+    in: path
+    description: Dataset ID of the requested table.
+    example: mitelman
+    schema:
+      type: string
+      required: true
+  - name: table_id
+    in: path
+    description: Table ID of the requested table.
+    example: AuthorReference_current
+    schema:
+      type: string
+      required: true
+responses:
+    "200":
+      description: OK
+      schema:
+        $ref: "#/definitions/tblPreviewResponse"
+    "204":
+      description: No record is found for the given table
+      schema:
+        title: No record is found
+        type: object
+        example:
+          message: No record is found for table isb-cgc-eg.eg-dataset.eg-table
+    "400":
+      description: Bad request
+      schema:
+        title: Invalid input was given
+        type: object
+        example:
+          message: One or more required parameters (project id, dataset_id or table_id) were not supplied.
+
+definitions:
+  tblPreviewResponse:
+    type: object
+    properties:
+      schema_fields:
+        type: array
+        items:
+          type: object
+          properties:
+            description:
+              type: string
+              example: this reference number is always an integer
+            mode:
+              type: string
+              example: NULLABLE
+            name:
+              type: string
+              example: RefNo
+      tbl_data:
+        type: array
+        items:
+          type: object
+          properties:
+            Name:
+              type: string
+              example: Hayata I
+            NameOrder:
+              type: integer
+              example: 1
+            RefNo:
+              type: integer
+              example: 10
