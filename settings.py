@@ -37,7 +37,8 @@ def setup_app(app):
             '\'unsafe-inline\'',
             'data:',
             'blob:'
-        ]
+        ],
+        'font-src': ['\'self\'', '*.gstatic.com']
     })
 
 
@@ -68,8 +69,10 @@ def pull_metadata():
     except requests.exceptions.ConnectionError as e:
         error_message = 'ConnectionError'
         status_code = e.response.status_code
+    message = None
     if status_code != 200:
         bq_table_files['bq_filters']['file_data'] = None
         bq_table_files['bq_metadata']['file_data'] = None
         bq_total_entries = 0
-        return f'ERROR While attempting to retrieve BQ metadata file: [{status_code}] {error_message}'
+        message = f'ERROR While attempting to retrieve BQ metadata file: [{status_code}] {error_message}'
+    return message

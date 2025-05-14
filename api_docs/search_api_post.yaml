@@ -1,6 +1,7 @@
 description: "Get a list of ISB-CGC hosted BigQuery tables using filters using POST method"
 tags:
-  - name: ISB-CGC BigQuery Table Search
+  - name: Table Search
+operationId: postSearchApi
 consumes:
   - application/json
 produces:
@@ -168,11 +169,15 @@ definitions:
         type: string
         example: current
       program:
-        type: string
-        example: rebc|tcga|wcdt
+        type: array
+        items:
+          type: string
+          example: tcga
       category:
-        type: string
-        example: processed_-omics_data
+        type: array
+        items:
+          type: string
+          example: processed_-omics_data
       friendlyName:
         type: string
         example: gene expression
@@ -180,11 +185,17 @@ definitions:
         type: string
         example: hg38
       source:
-        type: string
-        example: gdc
+        type: array
+        items:
+          type: string
+          example: gdc
       data_type:
-        type: string
-        example: gene_expression
+        type: array
+        items:
+          type: string
+          example: gene_expression
       experimental_strategy:
-        type: string
-        example: rnaseq
+        type: array
+        items:
+          type: string
+          example: rnaseq
