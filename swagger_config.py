@@ -6,8 +6,9 @@ swagger_template = {
         # "version": "1.0",
     },
     "schemes": [
-        "https",
-        "http"
+        "https"
+        # ,
+        # "http"
     ],
 }
 

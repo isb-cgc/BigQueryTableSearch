@@ -1,6 +1,7 @@
 description: "Get a list of ISB-CGC hosted BigQuery tables using filters using POST method"
 tags:
-  - name: ISB-CGC BigQuery Table Search
+  - name: Table Search
+operationId: postSearchApi
 consumes:
   - application/json
 produces:

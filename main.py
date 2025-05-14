@@ -96,13 +96,14 @@ def search_api():
     return jsonify(filtered_meta_data)
 
 
-@app.route("/get_tbl_preview/<proj_id>/<dataset_id>/<table_id>/", methods=['GET', 'POST'])
+@swag_from('api_docs/get_tbl_preview.yaml', endpoint='get_tbl_preview', methods=['GET'])
+@app.route("/get_tbl_preview/<proj_id>/<dataset_id>/<table_id>/", methods=['GET'])
 def get_tbl_preview(proj_id, dataset_id, table_id):
     status = 200
     max_row = 8
     try:
         if not proj_id or not dataset_id or not table_id:
-            app.logger.warning("[WARNING] Required ID missing: {}.{}.{}".format(proj_id, dataset_id, table_id))
+            app.logger.warning("[WARNING] Required ID missing")
             status = 400
             result = {
                 'message': "One or more required parameters (project id, dataset_id or table_id) were not supplied."
@@ -138,7 +139,48 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
     if status != 200:
         app.logger.error(
             f"ERROR While attempting to retrieve preview data for {proj_id}.{dataset_id}.{table_id} table: [{status}] {result['message']}")
-    return jsonify(result)
+    response = jsonify(result)
+    response.status_code = status
+    return response
+
+
+@swag_from('api_docs/get_filter_options.yaml', endpoint='get_filter_options', methods=['GET'])
+@app.route("/get_filter_options/<filter_type>/", methods=['GET'])
+def get_filter_options(filter_type):
+    status = 200
+    filter_type_options = ['category', 'status', 'program', 'data_type', 'experimental_strategy', 'reference_genome',
+                           'source', 'project_id']
+    try:
+        settings.pull_metadata()
+        filter_dic = settings.bq_table_files['bq_filters']
+        if filter_dic:
+            last_modified = filter_dic['last_modified']
+            file_data = filter_dic['file_data']
+            if filter_type:
+                if filter_type in file_data:
+                    file_data = file_data[filter_type]
+                elif filter_type not in filter_type_options:
+                    raise ValueError(f"Invalid filter_type - '{filter_type}' is given")
+            else:
+                raise ValueError(f"No filter_type value was given. filter_type value can be one of the followings: [{', '.joins(filter_type_options)}]")
+            options = []
+            for op in file_data['options']:
+                options.append(op['value'])
+            filter_options = {
+                "last_modified": last_modified,
+                "options": options
+            }
+        response_obj = filter_options
+    except ValueError as e:
+        status = 400
+        response_obj = {'message': f"{e}"}
+    except Exception as e:
+        status = e.response.status_code
+        response_obj = {'message': e.response}
+    return jsonify(response_obj), status
+
+
+
 
 
 @app.errorhandler(404)

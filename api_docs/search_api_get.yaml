@@ -145,7 +145,8 @@ definitions:
       - wcdt
 description: "Get a list of ISB-CGC hosted BigQuery tables using filters using GET method"
 tags:
-  - name: ISB-CGC BigQuery Table Search
+  - name: Table Search
+operationId: getSearchApi
 produces:
   - application/json
 summary:
