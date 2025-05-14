@@ -526,7 +526,8 @@ $(document).ready(function () {
 
 let set_filters = function () {
     let query_param_arr = [];
-    let select_filters = ['status', 'program', 'projectId', 'reference_genome', 'source', 'data_type', 'experimental_strategy']
+    let s_select_filters = ['status', 'projectId', 'reference_genome',]
+    let m_select_filters = ['program',  'source', 'data_type', 'experimental_strategy']
     let text_filters = ['friendlyName', 'datasetId', 'tableId', 'description', 'field_name', 'labels'];
     let show_more_filters = ['projectId', 'datasetId', 'tableId', 'description', 'field_name', 'labels'];
     let show_all_filters = false;
@@ -534,9 +535,24 @@ let set_filters = function () {
         selected_filters['include_always_newest'] = 'true';
     }
     for (const f in selected_filters) {
-        if (select_filters.includes(f)) {
+        if (s_select_filters.includes(f)) {
             $("select[data-column-name='" + f + "'] option").each(function () {
-                for (let v of selected_filters[f].split('|')) {
+                for (let v of selected_filters[f]) {
+                    if (is_quoted(v)) {
+                        v = v.slice(1, -1);
+                    }
+                    if ($(this).val() === v) {
+                        $(this).prop('selected', true);
+                        break;
+                    }
+                }
+            });
+        } else if (m_select_filters.includes(f)) {
+            $("select[data-column-name='" + f + "'] option").each(function () {
+                let value_array = selected_filters[f];
+                if (selected_filters[f][0].includes('|'))
+                    value_array = selected_filters[f][0].split('|');
+                for (let v of value_array) {
                     if (is_quoted(v)) {
                         v = v.slice(1, -1);
                     }
@@ -559,7 +575,9 @@ let set_filters = function () {
             show_all_filters = true;
             $('#show-btn').click();
         }
-        query_param_arr.push(f + '=' + selected_filters[f]);
+        for (let v of selected_filters[f]){
+            query_param_arr.push(f + '=' + v);
+        }
     }
     let query_param_url = (query_param_arr.length > 0 ? ('?' + query_param_arr.join('&')) : '');
     return query_param_url
