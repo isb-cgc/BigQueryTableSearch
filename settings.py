@@ -37,7 +37,8 @@ def setup_app(app):
             '\'unsafe-inline\'',
             'data:',
             'blob:'
-        ]
+        ],
+        'font-src': ['\'self\'', '*.gstatic.com']
     })
 
 

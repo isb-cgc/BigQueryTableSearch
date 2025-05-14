@@ -1,3 +1,148 @@
+definitions:
+  projectIdOptions:
+    enum: &PROJECT_ID
+      - isb-cgc
+      - isb-cgc-bq
+  dataTypeOptions:
+    enum: &DATA_TYPE
+      - acetylome
+      - biospecimen
+      - biospecimen_supplement
+      - cell_spatial_characterization
+      - clinical_data
+      - clinical_supplement
+      - cnvr_gene_level
+      - copy_number_segment
+      - copy_number_segment_allelic
+      - copy_number_segment_masked
+      - cytoband_coordinate_conversion
+      - cytogenetic
+      - data_dictionary
+      - disease_classifications
+      - dna_methylation
+      - drug_target_interactions
+      - fastqc_metrics
+      - file_metadata
+      - gene_expression
+      - gene_fusion
+      - gene_ontology
+      - genome_annotation
+      - glycoproteome
+      - literature
+      - metadata
+      - microarray
+      - mirna_annotations
+      - mirna_expression
+      - mirna_isoform_expression
+      - mirna_target_interactions
+      - pathway_annotations
+      - phosphoproteome
+      - protein_annotations
+      - protein_expression
+      - proteome_annotation
+      - rnaseq
+      - somatic_mutation
+      - survival
+      - ubiquitylome
+  sourceOptions:
+    enum: &SOURCE
+      - affymetrix_genome_wide_human_snp_array
+      - broad
+      - cda
+      - clinvar
+      - dbsnp_database
+      - depmap
+      - ensembl
+      - ensembl2reactome
+      - gdc
+      - gencode
+      - gene_ontology_resource_go
+      - genotype_tissue_expression_gtex_project
+      - gnomad_database
+      - htan
+      - htan-chop
+      - htan-duke
+      - htan-hms
+      - htan-htapp
+      - htan-msk
+      - htan-ohsu
+      - htan-tnp-tma
+      - htan-vumc
+      - infinium
+      - infinium_humanmethylation_27
+      - infinium_humanmethylation_450
+      - infinium_methylation_epic
+      - international_classficiation_of_disesase_icd
+      - isb-cgc
+      - isb_cgc-qotm
+      - kaviar_genomic_variant_database
+      - literature
+      - mirbase2reactome
+      - mirbase_the_microrna_database
+      - mirtarbase_database
+      - mitelman_database
+      - ncbi
+      - pdc
+      - reactome
+      - targetome
+      - tcia
+      - ucsc
+      - ucsc_xena
+      - uniprot
+  experimentalStrategyOptions:
+    enum: &EXP_STRATEGIES
+      - array
+      - rnaseq
+      - rppa
+  referenceGenomeOptions:
+    enum: &REF_GENOME [ hg19, hg38]
+  statusOptions:
+    enum: &STATUS [ current, archived, deprecated ]
+  categoryOptions:
+    enum: &CATEGORY
+      - clinical_biospecimen_data
+      - metadata
+      - processed_-omics_data
+      - reference_database
+  programOptions:
+    enum: &PROGRAM
+      - apollo
+      - beataml
+      - broad_institute
+      - cbtn
+      - cbttc
+      - ccle
+      - cddp_eagle
+      - cgci
+      - cmi
+      - cptac
+      - cptac2
+      - cptac3
+      - ctsp
+      - cytoband
+      - exc_responders
+      - exceptional_responders
+      - fm
+      - genie
+      - georgetown_proteomics
+      - hcmi
+      - htan
+      - icpc
+      - match
+      - mmrf
+      - mp
+      - mp2prt
+      - nciccr
+      - ohsu
+      - organoid
+      - pancancer_atlas
+      - quant_maps_tissue_biopsies
+      - rebc
+      - target
+      - tcga
+      - trio
+      - varepop
+      - wcdt
 description: "Get a list of ISB-CGC hosted BigQuery tables using filters using GET method"
 tags:
   - name: ISB-CGC BigQuery Table Search
@@ -10,27 +155,36 @@ parameters:
     description: Each table is assigned a status based on the following criteria<br>- <strong>current</strong> Tables with the most up-to-date available information<br>- <strong>archived</strong> Tables with older versions of data<br>- <strong>deprecated</strong> Tables that have data that is no longer supported
     in: query
     example: current
-    schema:
-      type: string
-      enum:
-        - current
-        - archived
-        - deprecated
-      required: false
+    type: string
+    enum: *STATUS
+    required: false
+  - name: include_always_newest
+    description: When set to <code>true</code>, <em>Always Newest</em> tables will display along with the stable tables. These tables are a copy of the latest versioned stable table. Because they are a copy of the latest versioned table, they will be updated every time a table is created for a new version of data.
+    in: query
+    example: true
+    type: string
+    enum: [true, false]
+    required: false
   - name: program
-    description: Filter the BigQuery tables by programs such as CCLE, TARGET and TCGA by using this filter. <em>Use an underscore character, "_", to replace a space character</em>.
+    description: Filter the BigQuery tables by programs such as CCLE, TARGET and TCGA by using this filter.
     in: query
     example: broad_institute
-    schema:
+    collectionFormat: multi
+    required: false
+    type: array
+    items:
       type: string
-      required: false
+      enum: *PROGRAM
   - name: category
-    description: The tables are grouped into four high-level categories<br>- <strong>clinical_biospecimen_data</strong> Patient case and sample information (includes clinical tables with patient demographic data, and biospecimen data with detailed sample information).<br>- <strong>metadata</strong> Information about raw data files including Google Cloud Storage Paths (includes tables with information about files available at the GDC, including GCS paths, creation dates, sizes, etc.). <br>- <strong>processed_-omics_data</strong> Processed data primarily from the GDC (i.e. raw data that has gone through GDC pipeline processing e.g. gene expression, miRNA expression, copy number, somatic mutations, methylation). <br>- <strong>reference_database</strong> Genomic and Proteomic information that can be used to cross-reference against processed -omics data tables (examples include ClinVar, cytoBand, dbSNP, Ensembl, Ensembl2Reactome).<br><br><em>Use the pipeline character, '|', between the values if adding more than one category.</em>
+    description: The tables are grouped into four high-level categories<br>- <strong>clinical_biospecimen_data</strong> Patient case and sample information (includes clinical tables with patient demographic data, and biospecimen data with detailed sample information).<br>- <strong>metadata</strong> Information about raw data files including Google Cloud Storage Paths (includes tables with information about files available at the GDC, including GCS paths, creation dates, sizes, etc.). <br>- <strong>processed_-omics_data</strong> Processed data primarily from the GDC (i.e. raw data that has gone through GDC pipeline processing e.g. gene expression, miRNA expression, copy number, somatic mutations, methylation). <br>- <strong>reference_database</strong> Genomic and Proteomic information that can be used to cross-reference against processed -omics data tables (examples include ClinVar, cytoBand, dbSNP, Ensembl, Ensembl2Reactome).
     in: query
-    example:  metadata | reference_database
-    schema:
+    example:  metadata
+    collectionFormat: multi
+    required: false
+    type: array
+    items:
       type: string
-      required: false
+      enum: *CATEGORY
   - name: friendlyName
     in: query
     description: Filter by the table's Friendly Name; that is, a descriptive, user-friendly name for the table. Type all or a portion of the name into the field to perform the search. For exact match, wrap the name in double quotes.
@@ -41,41 +195,82 @@ parameters:
   - name: reference_genome
     in: query
     description: Filter for tables that contain data for hg19 or hg38.
-    example: HG38
-    schema:
-      type: string
-      enum:
-        - HG19
-        - HG38
-        - hg19
-        - hg38
-      required: false
+    example: hg38
+    type: string
+    enum: *REF_GENOME
+    required: false
   - name: source
-    description: Filter by the source of the data. <br>- More than one source can be added to the filter by using the pipeline character, '|', as a delimiter.<br>- Use underscore, '_', to replace the space character.
     in: query
+    description: Filter by the source of the data. <br>- More than one source can be added to the filter by using the pipeline character, '|', as a delimiter.<br>- Use underscore, '_', to replace the space character.
     example: GDC
-    schema:
+    collectionFormat: multi
+    required: false
+    type: array
+    items:
       type: string
-      required: false
+      enum: *SOURCE
   - name: data_type
     in: query
     description: The Data Type filter also allows you to filter for data types of interest. Like the 'source' filter, multiple Data Types can be entered using a pipeline character '|' as a delimiter.
     example: clinical_data
-    schema:
+    collectionFormat: multi
+    required: false
+    type: array
+    items:
       type: string
-      required: false
+      enum: *DATA_TYPE
   - name: experimental_strategy
     in: query
     description: The Experimental Strategy filter also allows you to filter for experimental strategies of interest. Multiple Experimental Strategies can be selected.
     example: rnaseq
+    collectionFormat: multi
+    required: false
+    type: array
+    items:
+      type: string
+      enum: *EXP_STRATEGIES
+  - name: projectId
+    in: query
+    description: Filter by the table's BigQuery project ID. Type all or a portion of the ID into the field to perform the search. For exact match, wrap the name in double quotes.
+    example: isb-cgc-bq
+    type: string
+    enum: *PROJECT_ID
+    required: false
+  - name: datasetId
+    in: query
+    description: Filter by the table's BigQuery dataset ID. Type all or a portion of the ID into the field to perform the search. For exact match, wrap the name in double quotes.
+    example: \"BEATAML1_0_versioned\"
     schema:
       type: string
-      enum:
-        - rnaseq
-        - array
-        - rppa
       required: false
-
+  - name: tableId
+    in: query
+    description: Filter by the table's BigQuery table ID. Type all or a portion of the ID into the field to perform the search. For exact match, wrap the name in double quotes.
+    example: per_sample_file_metadata
+    schema:
+      type: string
+      required: false
+  - name: description
+    in: query
+    description: Filter by the table's description field. Type a keyword or part of the description into the field to perform the search.
+    example: information from PDC data release V2.13
+    schema:
+      type: string
+      required: false
+  - name: labels
+    in: query
+    description: Each table was tagged with labels relating to the status, program, category, reference genome build, source, data type, experimental strategy, access and version. Users can search on any of these labels on the Labels filter field. Type a keyword or part of the label into the field to perform the search.
+    example: v2_13
+    schema:
+      type: string
+      required: false
+  - name: field_name
+    in: query
+    description: Find tables that include a given field name. Type all or a portion of the field name into the field to perform the search.
+    example: age
+    schema:
+      type: string
+      required: false
 responses:
     "200":
       description: OK
@@ -95,3 +290,4 @@ responses:
         type: object
         example:
           message: Sorry, query job has timed out.
+

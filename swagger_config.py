@@ -6,13 +6,14 @@ swagger_template = {
         # "version": "1.0",
     },
     "schemes": [
-        "https"
+        "https",
+        "http"
     ],
 }
 
 swagger_config = {
     "headers": [
-        ('Access-Control-Allow-Origin', 'self'),
+        ('Access-Control-Allow-Origin', '*'),
         ('Access-Control-Allow-Methods', "GET, POST"),
     ],
     "specs": [

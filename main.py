@@ -55,16 +55,11 @@ def search(status=None):
     error_msg = settings.pull_metadata()
     if error_msg:
         app.logger.error(f"[ERROR] {error_msg}")
-    selected_filters = {}
     if request.method == 'POST':
         rq_meth = request.form
     else:
         rq_meth = request.args
-    for f in ['projectId', 'datasetId', 'tableId', 'friendlyName', 'description', 'field_name', 'labels',
-              'include_always_newest', 'status', 'category', 'experimental_strategy', 'program', 'source', 'data_type',
-              'reference_genome', 'show_details']:
-        if rq_meth.get(f):
-            selected_filters[f] = request.args.get(f).lower()
+    selected_filters = rq_meth.to_dict(flat=False)
     return render_template("bq_meta_search.html", bq_filters=settings.bq_table_files['bq_filters']['file_data'],
                            selected_filters=selected_filters,
                            bq_total_entries=settings.bq_total_entries)
