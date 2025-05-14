@@ -5,9 +5,6 @@ definitions:
   filterOptionsResponse:
     type: object
     properties:
-      last_modified:
-        type: string
-        example: "Fri, 09 May 2025 18:09:52 GMT"
       options:
         type: array
         items:

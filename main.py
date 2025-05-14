@@ -154,7 +154,6 @@ def get_filter_options(filter_type):
         settings.pull_metadata()
         filter_dic = settings.bq_table_files['bq_filters']
         if filter_dic:
-            last_modified = filter_dic['last_modified']
             file_data = filter_dic['file_data']
             if filter_type:
                 if filter_type in file_data:
@@ -167,7 +166,6 @@ def get_filter_options(filter_type):
             for op in file_data['options']:
                 options.append(op['value'])
             filter_options = {
-                "last_modified": last_modified,
                 "options": options
             }
         response_obj = filter_options
