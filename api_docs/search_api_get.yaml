@@ -1,9 +1,11 @@
 definitions:
   projectIdOptions:
+    type: string
     enum: &PROJECT_ID
       - isb-cgc
       - isb-cgc-bq
   dataTypeOptions:
+    type: string
     enum: &DATA_TYPE
       - acetylome
       - biospecimen
@@ -45,6 +47,7 @@ definitions:
       - survival
       - ubiquitylome
   sourceOptions:
+    type: string
     enum: &SOURCE
       - affymetrix_genome_wide_human_snp_array
       - broad
@@ -90,21 +93,26 @@ definitions:
       - ucsc_xena
       - uniprot
   experimentalStrategyOptions:
+    type: string
     enum: &EXP_STRATEGIES
       - array
       - rnaseq
       - rppa
   referenceGenomeOptions:
+    type: string
     enum: &REF_GENOME [ hg19, hg38]
   statusOptions:
+    type: string
     enum: &STATUS [ current, archived, deprecated ]
   categoryOptions:
+    type: string
     enum: &CATEGORY
       - clinical_biospecimen_data
       - metadata
       - processed_-omics_data
       - reference_database
   programOptions:
+    type: string
     enum: &PROGRAM
       - apollo
       - beataml
