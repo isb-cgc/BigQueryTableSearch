@@ -1,5 +1,6 @@
 definitions:
   filterTypeOptions:
+    type: string
     enum: &FILTER_TYPE ['category', 'status', 'program', 'data_type', 'experimental_strategy', 'reference_genome',
                            'source', 'project_id']
   filterOptionsResponse:
