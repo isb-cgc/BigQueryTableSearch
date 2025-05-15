@@ -19,7 +19,7 @@ responses:
   "200":
     description: OK
     schema:
-      $ref: "#/definitions/responseSearchResult"
+      $ref: "#/definitions/searchResultResponse"
   "400":
     description: Bad request
     schema:
@@ -35,7 +35,7 @@ responses:
       example:
         message: Sorry, query job has timed out.
 definitions:
-  responseSearchResult:
+  searchResultResponse:
     type: array
     items:
       type: object
