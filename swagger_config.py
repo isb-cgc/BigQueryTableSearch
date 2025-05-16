@@ -3,7 +3,6 @@ swagger_template = {
     "info": {
         "title": "[ISB-CGC] BigQuery Table Search",
         "description": "API Documentation for [ISB-CGC] BigQuery Table Search",
-        # "version": "1.0",
     },
     "schemes": [
         "https"
@@ -13,6 +12,7 @@ swagger_template = {
 }
 
 swagger_config = {
+    "title": "BigQuery Table Search API - Swagger UI",
     "headers": [
         ('Access-Control-Allow-Origin', '*'),
         ('Access-Control-Allow-Methods', "GET, POST"),

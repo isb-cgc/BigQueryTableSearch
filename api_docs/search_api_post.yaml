@@ -19,7 +19,7 @@ responses:
   "200":
     description: OK
     schema:
-      $ref: "#/definitions/searchResultResponse"
+      $ref: "#/definitions/responseSearchResult"
   "400":
     description: Bad request
     schema:
@@ -35,133 +35,138 @@ responses:
       example:
         message: Sorry, query job has timed out.
 definitions:
-  searchResultResponse:
-    type: array
-    items:
-      type: object
-      properties:
-        creationTime:
-          type: string
-          example: 1602713227330
-        description:
-          type: string
-          example: Data was generated from file metadata for TCGA data in the GDC legacy archive for Release 26 from Oct 2020
-        friendlyName:
-          type: string
-          example: TCGA HG19 PER SAMPLE FILE METADATA REL26 VERSIONED
-        id:
-          type: string
-          example: "isb-cgc-bq:TCGA_versioned.per_sample_file_metadata_hg19_gdc_r26"
-        labels:
+  searchResultItem:
+    type: object
+    properties:
+      creationTime:
+        type: string
+        example: 1602713227330
+      description:
+        type: string
+        example: Data was generated from file metadata for TCGA data in the GDC legacy archive for Release 26 from Oct 2020
+      friendlyName:
+        type: string
+        example: TCGA HG19 PER SAMPLE FILE METADATA REL26 VERSIONED
+      id:
+        type: string
+        example: "isb-cgc-bq:TCGA_versioned.per_sample_file_metadata_hg19_gdc_r26"
+      labels:
+        type: object
+        properties:
+          access:
+            type: string
+            example: open
+          category:
+            type: string
+            example: metadata
+          data_type:
+            type: string
+            example: file_metadata
+          experimental_strategy:
+            type: string
+            example: rnaseq
+          program:
+            type: string
+            example: tcga
+          reference_genome:
+            type: string
+            example: hg19
+          source:
+            type: string
+            example: gdc
+          status:
+            type: string
+            example: current
+          version:
+            type: string
+            example: r26
+      lastModifiedTime:
+        type: string
+        example: 1729118478342
+      numCurrentPhysicalBytes:
+        type: string
+        example: 53347519
+      numRows:
+        type: string
+        example: 707037
+      schema:
+        type: object
+        properties:
+          fields:
+            type: array
+            items:
+              type: object
+              properties:
+                description:
+                  type: string
+                  example: Unique GDC identifier for this file.
+                mode:
+                  type: string
+                  example: NULLABLE
+                name:
+                  type: string
+                  example: file_gdc_id
+                type:
+                  type: string
+                  example: STRING
+      tableReference:
+        type: object
+        properties:
+          projectId:
+            type: string
+            example: isb-cgc-bq
+          datasetId:
+            type: string
+            example: TCGA_versioned
+          tableId:
+            type: string
+            example: per_sample_file_metadata_hg19_gdc_r26
+      type:
+        type: string
+        example: TABLE
+      usefulJoins:
+        type: array
+        items:
           type: object
           properties:
-            access:
+            condition:
               type: string
-              example: open
-            category:
+              example: clin.submitter_id = sfm.case_barcode
+            description:
               type: string
-              example: metadata
-            data_type:
+              example: This query finds HG38 sample file metadata for a program.
+            sql:
               type: string
-              example: file_metadata
-            experimental_strategy:
-              type: string
-              example: rnaseq
-            program:
-              type: string
-              example: tcga
-            reference_genome:
-              type: string
-              example: hg19
-            source:
-              type: string
-              example: gdc
-            status:
-              type: string
-              example: current
-            version:
-              type: string
-              example: r26
-        lastModifiedTime:
-          type: string
-          example: 1729118478342
-        numCurrentPhysicalBytes:
-          type: string
-          example: 53347519
-        numRows:
-          type: string
-          example: 707037
-        schema:
-          type: object
-          properties:
-            fields:
+              example: "#Query for Sample File Metadata by program\nSELECT sfm.program_name,sfm.case_gdc_id, sfm.case_barcode, sfm.sample_gdc_id, sfm.sample_barcode, sfm.sample_type_name, clin.primary_site, sfm.access, sfm.file_type, sfm.data_format, sfm.file_name_key\nFROM `isb-cgc-bq.MMRF.clinical_gdc_current` clin \nJOIN `isb-cgc-bq.MMRF.per_sample_file_metadata_hg38_gdc_current` sfm \nON clin.submitter_id = sfm.case_barcode\norder by sfm.case_gdc_id, sfm.sample_gdc_id"
+            tables:
               type: array
               items:
-                type: object
-                properties:
-                  description:
-                    type: string
-                    example: Unique GDC identifier for this file.
-                  mode:
-                    type: string
-                    example: NULLABLE
-                  name:
-                    type: string
-                    example: file_gdc_id
-                  type:
-                    type: string
-                    example: STRING
-        tableReference:
-          type: object
-          properties:
-            projectId:
+                type: string
+                example: "isb-cgc-bq:MMRF.per_sample_file_metadata_hg38_gdc_current"
+            title:
               type: string
-              example: isb-cgc-bq
-            datasetId:
-              type: string
-              example: TCGA_versioned
-            tableId:
-              type: string
-              example: per_sample_file_metadata_hg19_gdc_r26
-        type:
-          type: string
-          example: TABLE
-        usefulJoins:
-          type: array
-          items:
+              example: HG38 Sample File Metadata
+      versions:
+        type: object
+        properties:
+          version_no:
             type: object
             properties:
-              condition:
-                type: string
-                example: clin.submitter_id = sfm.case_barcode
-              description:
-                type: string
-                example: This query finds HG38 sample file metadata for a program.
-              sql:
-                type: string
-                example: "#Query for Sample File Metadata by program\nSELECT sfm.program_name,sfm.case_gdc_id, sfm.case_barcode, sfm.sample_gdc_id, sfm.sample_barcode, sfm.sample_type_name, clin.primary_site, sfm.access, sfm.file_type, sfm.data_format, sfm.file_name_key\nFROM `isb-cgc-bq.MMRF.clinical_gdc_current` clin \nJOIN `isb-cgc-bq.MMRF.per_sample_file_metadata_hg38_gdc_current` sfm \nON clin.submitter_id = sfm.case_barcode\norder by sfm.case_gdc_id, sfm.sample_gdc_id"
+              is_latest:
+                type: boolean
+                example: true
               tables:
                 type: array
                 items:
                   type: string
-                  example: "isb-cgc-bq:MMRF.per_sample_file_metadata_hg38_gdc_current"
-              title:
-                type: string
-                example: HG38 Sample File Metadata
-        versions:
-          type: object
-          properties:
-            version_no:
-              type: object
-              properties:
-                is_latest:
-                  type: boolean
-                  example: true
-                tables:
-                  type: array
-                  items:
-                    type: string
-                    example: "isb-cgc-bq:ICPC.quant_phosphoproteome_academia_sinica_LUAD100_pdc_current"
+                  example: "isb-cgc-bq:ICPC.quant_phosphoproteome_academia_sinica_LUAD100_pdc_current"
+
+  responseSearchResult:
+    type: array
+    items:
+      $ref: "#/definitions/searchResultItem"
+#      type: object
+
   requestFilterSet:
     type: object
     properties:
