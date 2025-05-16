@@ -50,7 +50,11 @@ def is_valid(val):
 def get_conditions(rq_data, filters):
     conditions = []
     for f in filters:
-        v_list = rq_data.get(f, [])
+        val = rq_data.get(f, [])
+        if isinstance(val, list):
+            v_list = val
+        else:
+            v_list = val.split('|')
         for v in v_list:
             if v and not is_valid(v):
                 raise ValueError
