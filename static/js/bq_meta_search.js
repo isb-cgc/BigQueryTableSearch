@@ -526,13 +526,13 @@ $(document).ready(function () {
 
 let set_filters = function () {
     let query_param_arr = [];
-    let s_select_filters = ['status', 'projectId', 'reference_genome',]
+    let s_select_filters = ['status', 'projectId', 'reference_genome']
     let m_select_filters = ['program',  'source', 'data_type', 'experimental_strategy']
     let text_filters = ['friendlyName', 'datasetId', 'tableId', 'description', 'field_name', 'labels'];
     let show_more_filters = ['projectId', 'datasetId', 'tableId', 'description', 'field_name', 'labels'];
     let show_all_filters = false;
     if (!('include_always_newest' in selected_filters)){
-        selected_filters['include_always_newest'] = 'true';
+        selected_filters['include_always_newest'] = ['true'];
     }
     for (const f in selected_filters) {
         if (s_select_filters.includes(f)) {
@@ -569,7 +569,7 @@ let set_filters = function () {
                 $(this).prop('checked', selected_filters[f].includes($(this).val()));
             });
         } else if (f === 'include_always_newest') {
-            $('#include_always_newest').prop('checked', selected_filters[f] == 'true');
+            $('#include_always_newest').prop('checked', selected_filters[f].includes('true'));
         }
         if (!show_all_filters && show_more_filters.includes(f)) {
             show_all_filters = true;
