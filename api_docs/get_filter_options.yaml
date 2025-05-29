@@ -1,0 +1,74 @@
+definitions:
+  filterTypeOptions:
+    type: string
+    enum: &FILTER_TYPE ['category', 'status', 'program', 'data_type', 'experimental_strategy', 'reference_genome',
+                           'source', 'project_id']
+  filterOptionsResponse:
+    type: object
+    properties:
+      options:
+        type: array
+        items:
+          type: string
+          example: archived
+
+  tblPreviewResponse:
+    type: object
+    properties:
+      schema_fields:
+        type: array
+        items:
+          type: object
+          properties:
+            description:
+              type: string
+              example: this reference number is always an integer
+            mode:
+              type: string
+              example: NULLABLE
+            name:
+              type: string
+              example: RefNo
+      tbl_data:
+        type: array
+        items:
+          type: object
+          properties:
+            Name:
+              type: string
+              example: Hayata I
+            NameOrder:
+              type: integer
+              example: 1
+            RefNo:
+              type: integer
+              example: 10
+
+description: Get the available filter options for filter types ('category', 'status', 'program', 'data_type', 'experimental_strategy', 'reference_genome',
+                           'source', 'project_id')
+tags:
+  - name: Fetch Options
+produces:
+  - application/json
+operationId: getFilterOptions
+summary: Fetch the available filter options for your search
+parameters:
+  - name: filter_type
+    in: path
+    description: Filter Type
+    example: program
+    type: string
+    enum: *FILTER_TYPE
+    required: true
+responses:
+    "200":
+      description: OK
+      schema:
+        $ref: "#/definitions/filterOptionsResponse"
+    "400":
+      description: Bad request
+      schema:
+        title: Invalid input was given
+        type: object
+        example:
+          message: Invalid filter_type - 'example_type' is given
