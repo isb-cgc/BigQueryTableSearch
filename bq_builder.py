@@ -99,7 +99,7 @@ def metadata_query(req):
     where_clause = build_where_clause(get_conditions(req_data, r_filters))
     join_clause = build_join_clause(get_conditions(req_data, l_filters), 'BQS_LABELS')
     join_clause += build_join_clause(get_conditions(req_data, f_filters), 'BQS_SCHEMA_FIELDS')
-    query_str = f'SELECT metadata FROM `{settings.BQ_METADATA_PROJ}.bqs_metadata.BQS_TABLE_REFS` AS R \n'
+    query_str = f'SELECT distinct metadata FROM `{settings.BQ_METADATA_PROJ}.bqs_metadata.BQS_TABLE_REFS` AS R \n'
     query_str += join_clause
     query_str += where_clause
     return query_str
