@@ -26,6 +26,7 @@ swagger_config = {
         }
     ],
     "static_url_path": "/flasgger_static",
+    "jquery_js": '/static/js/libs/jquery.min.js',
     "swagger_ui": True,
     "specs_route": "/apidocs/"
 }
