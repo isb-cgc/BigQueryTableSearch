@@ -18,7 +18,6 @@ import re
 import settings
 
 
-# with the conditions (list of field-val tuples), build an sql where clause
 def build_where_clause(conditions):
     where_clause = ''
     i = 0
@@ -43,13 +42,11 @@ def build_where_clause(conditions):
     return where_clause
 
 
-# return true if val is valid and false if invalid character is detected
 def is_valid(val):
     invalid_match = re.match('[^a-zA-Z\d\s.\-|_:\'\"]', val.strip('\'\"'))
     return not invalid_match
 
 
-# return a compiled list of paired field-value tuples from the request
 def get_conditions(rq_data, filters):
     conditions = []
     for f in filters:
@@ -66,7 +63,6 @@ def get_conditions(rq_data, filters):
     return conditions
 
 
-# join sql clause builder
 def build_join_clause(conditions, table_name):
     join_clause = ''
     for k, vals in conditions:
@@ -88,7 +84,6 @@ def build_join_clause(conditions, table_name):
     return join_clause
 
 
-# return an SQL query statement with the given search criteria in req
 def metadata_query(req):
     if req.method == 'POST':
         if req.form:
@@ -110,7 +105,6 @@ def metadata_query(req):
     return query_str
 
 
-# returns true if the field_val is wrapped with single quotes or double quotes
 def is_quoted(field_val):
     if field_val:
         single_quotes = re.fullmatch(r"^\'.*\'$", field_val)
