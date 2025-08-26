@@ -34,24 +34,22 @@ if os.environ.get('IS_GAE_DEPLOYMENT', 'False') != 'True':
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(app.root_path, 'privatekey.json')
 logging_client = logging.Client()
 
-# landing page
+
 @app.route("/", methods=['POST', 'GET'])
 def home():
     return redirect(url_for('search', status='current', include_always_newest='false'))
 
 
-# about page
 @app.route("/about/")
 def about():
     return render_template("about.html")
 
 
-# privacy policy page
 @app.route("/privacy/")
 def privacy():
     return render_template("privacy.html")
 
-# search page
+
 @app.route("/search", methods=['POST', 'GET'])
 def search(status=None):
     error_msg = settings.pull_metadata()
@@ -66,8 +64,6 @@ def search(status=None):
                            selected_filters=selected_filters,
                            bq_total_entries=settings.bq_total_entries)
 
-
-# search api: returns search result in json format
 @swag_from('api_docs/search_api_get.yaml', endpoint='search_api', methods=['GET'])
 @swag_from('api_docs/search_api_post.yaml', endpoint='search_api', methods=['POST'])
 @app.route("/search_api", methods=['GET', 'POST'])
@@ -100,7 +96,6 @@ def search_api():
     return jsonify(filtered_meta_data)
 
 
-# fetches table's preview (up to 8 rows)
 @swag_from('api_docs/get_tbl_preview.yaml', endpoint='get_tbl_preview', methods=['GET'])
 @app.route("/get_tbl_preview/<proj_id>/<dataset_id>/<table_id>/", methods=['GET'])
 def get_tbl_preview(proj_id, dataset_id, table_id):
@@ -149,7 +144,6 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
     return response
 
 
-# get the dropdown options or checkbox options for the filter type
 @swag_from('api_docs/get_filter_options.yaml', endpoint='get_filter_options', methods=['GET'])
 @app.route("/get_filter_options/<filter_type>/", methods=['GET'])
 def get_filter_options(filter_type):
@@ -184,15 +178,15 @@ def get_filter_options(filter_type):
     return jsonify(response_obj), status
 
 
-# handle 404 error
+
+
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
 
 
-# setup application
 settings.setup_app(app)
-# initialize Swagger
 swagger = Swagger(app, template=swagger_config.swagger_template,config=swagger_config.swagger_config)
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
