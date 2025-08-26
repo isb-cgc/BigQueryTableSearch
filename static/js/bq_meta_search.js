@@ -724,7 +724,7 @@ let format_useful_join_details = function (d) {
         });
         join_table += '<tr>' +
             '<td>' + join_info['title'] + '</td>' +
-            '<td>' + tables.join() + '</td>' +
+            '<td>' + tables.join('') + '</td>' +
             '<td><button class="badge useful-join-view-btn open-gcp-btn">View Details</button></td>' +
             '</tr>';
     });
