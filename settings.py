@@ -23,6 +23,7 @@ bq_table_files = {
 bq_total_entries = 0
 
 
+# setup application
 def setup_app(app):
     app.config['TESTING'] = (TIER.lower() != 'prod')
     app.config['ENV'] = 'production' if TIER.lower() == 'prod' else 'development'
@@ -42,6 +43,8 @@ def setup_app(app):
     })
 
 
+# checks the last modified dates of bq filter and bq metadata files from the bucket
+# and fetches the file data if the cached file data is outdated
 def pull_metadata():
     global bq_table_files, bq_total_entries
     status_code = 200
