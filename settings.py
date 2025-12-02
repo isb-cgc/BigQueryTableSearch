@@ -1,3 +1,4 @@
+import os
 from os import getenv
 from flask_talisman import Talisman
 import requests
@@ -27,20 +28,21 @@ bq_total_entries = 0
 def setup_app(app):
     app.config['TESTING'] = (TIER.lower() != 'prod')
     app.config['ENV'] = 'production' if TIER.lower() == 'prod' else 'development'
-    Talisman(app, strict_transport_security_max_age=hsts_max_age, content_security_policy={
-        'default-src': [
-            '\'self\'',
-            '*.googletagmanager.com',
-            '*.google-analytics.com',
-            '*.googleapis.com',
-            "*.fontawesome.com",
-            '*.jsdelivr.net',
-            '\'unsafe-inline\'',
-            'data:',
-            'blob:'
-        ],
-        'font-src': ['\'self\'', '*.gstatic.com']
-    })
+    if os.environ['TIER'] != 'local':
+        Talisman(app, strict_transport_security_max_age=hsts_max_age, content_security_policy={
+            'default-src': [
+                '\'self\'',
+                '*.googletagmanager.com',
+                '*.google-analytics.com',
+                '*.googleapis.com',
+                "*.fontawesome.com",
+                '*.jsdelivr.net',
+                '\'unsafe-inline\'',
+                'data:',
+                'blob:'
+            ],
+            'font-src': ['\'self\'', '*.gstatic.com']
+        })
 
 
 # checks the last modified dates of bq filter and bq metadata files from the bucket

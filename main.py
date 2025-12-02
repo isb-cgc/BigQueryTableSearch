@@ -31,7 +31,7 @@ from flasgger import swag_from
 app = Flask(__name__)
 
 if os.environ.get('IS_GAE_DEPLOYMENT', 'False') != 'True':
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(app.root_path, 'privatekey.json')
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(os.environ['SECURE_PATH'], 'privatekey.json')
 logging_client = logging.Client()
 
 # landing page
