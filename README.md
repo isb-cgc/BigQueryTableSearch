@@ -6,7 +6,7 @@ Standalone BigQuery Table Search System
 
 1) **Create a Service Account:** 
 Create a Service Account using [these instructions](https://cloud.google.com/iam/docs/creating-managing-service-accounts). 
-The account will need the following roles against the GCP project or BQ datasets holding the Mitelman DB data:
+The account will need the following roles against the GCP project or BQ datasets holding the data you wish to make searchable:
    - BigQuery Job User
    - Viewer
 
