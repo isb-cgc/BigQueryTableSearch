@@ -18,8 +18,7 @@ The account will need the following roles against the GCP project or BQ datasets
 `gcloud iam service-accounts add-iam-policy-binding <SERVICE ACCOUNT EMAIL> --member=user:<YOUR ACCOUNT EMAIL> --role=roles/iam.serviceAccountTokenCreator `.
 
 
-3) On the GCloud SDK CLI, run the command `gcloud auth application-default login --impersonate-service-account 
-<SERVICE ACCOUNT EMAIL>` to create the default credentials account under your identity.
+3) On the GCloud SDK CLI, run the command `gcloud auth application-default login --impersonate-service-account <SERVICE ACCOUNT EMAIL>` to create the default credentials account under your identity.
 
 
 4) Save a copy of `sample.env` into your secure files directory, renaming it to `dev.env`.  Add the missing values from the development
