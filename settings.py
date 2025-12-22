@@ -1,3 +1,4 @@
+import os
 from os import getenv
 from flask_talisman import Talisman
 import requests
@@ -9,6 +10,7 @@ from requests.exceptions import ConnectionError
 
 hsts_max_age = int(getenv('HSTS_MAX_AGE') or 3600)
 TIER = getenv('TIER', 'dev')
+IS_LOCAL = bool(getenv('IS_LOCAL','False').lower() == 'true')
 BQ_METADATA_PROJ = getenv('BQ_METADATA_PROJ', 'isb-cgc-dev-1')
 BQ_ECOSYS_BUCKET = getenv('BQ_ECOSYS_BUCKET',
                                   'https://storage.googleapis.com/webapp-static-files-isb-cgc-dev/bq_ecosys/')
@@ -42,20 +44,21 @@ bq_total_entries = 0
 def setup_app(app):
     app.config['TESTING'] = (TIER.lower() != 'prod')
     app.config['ENV'] = 'production' if TIER.lower() == 'prod' else 'development'
-    Talisman(app, strict_transport_security_max_age=hsts_max_age, content_security_policy={
-        'default-src': [
-            '\'self\'',
-            '*.googletagmanager.com',
-            '*.google-analytics.com',
-            '*.googleapis.com',
-            "*.fontawesome.com",
-            '*.jsdelivr.net',
-            '\'unsafe-inline\'',
-            'data:',
-            'blob:'
-        ],
-        'font-src': ['\'self\'', '*.gstatic.com']
-    })
+    if not IS_LOCAL:
+        Talisman(app, strict_transport_security_max_age=hsts_max_age, content_security_policy={
+            'default-src': [
+                '\'self\'',
+                '*.googletagmanager.com',
+                '*.google-analytics.com',
+                '*.googleapis.com',
+                "*.fontawesome.com",
+                '*.jsdelivr.net',
+                '\'unsafe-inline\'',
+                'data:',
+                'blob:'
+            ],
+            'font-src': ['\'self\'', '*.gstatic.com']
+        })
 
 
 def get_access_token():
