@@ -3,6 +3,9 @@ from flask_talisman import Talisman
 import requests
 from random import randint
 from datetime import datetime
+from google.oauth2 import service_account
+from google.auth.transport.requests import Request
+from requests.exceptions import ConnectionError
 
 hsts_max_age = int(getenv('HSTS_MAX_AGE') or 3600)
 TIER = getenv('TIER', 'dev')
@@ -13,6 +16,18 @@ BQ_FILTER_FILE_NAME = 'bq_meta_filters.json'
 BQ_FILTER_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_FILTER_FILE_NAME
 BQ_METADATA_FILE_NAME = 'bq_meta_data.json'
 BQ_METADATA_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_METADATA_FILE_NAME
+
+#
+# We use the metadata server to get Bearer Tokens to access private buckets, except for local dev:
+#
+METADATA_URL = 'http://metadata.google.internal/computeMetadata/v1/'
+METADATA_HEADERS = {'Metadata-Flavor': 'Google'}
+SERVICE_ACCOUNT = getenv('SERVICE_ACCOUNT', 'default')
+CREDENTIAL_SCOPES = ["https://www.googleapis.com/auth/devstorage.read_only"]
+# Only for local development, not cloud-deployed:
+CREDENTIALS_KEY_PATH = getenv('CREDENTIALS_KEY_PATH', '../privatekey.json')
+is_local = None
+
 
 bq_table_files = {
     'bq_filters': {'last_modified': None, 'file_path': BQ_FILTER_FILE_PATH,
@@ -43,15 +58,41 @@ def setup_app(app):
     })
 
 
+def get_access_token():
+    global is_local
+    access_token = None
+    if is_local is None or not is_local:
+        try:
+            url = '{}instance/service-accounts/{}/token'.format(METADATA_URL, SERVICE_ACCOUNT)
+            # Request an access token from the metadata server.
+            r = requests.get(url, headers=METADATA_HEADERS)
+            r.raise_for_status()
+            # Extract the access token from the response.
+            access_token = r.json()['access_token']
+            is_local = False
+        except ConnectionError as e:
+            is_local = True
+
+    if is_local:
+        credentials = service_account.Credentials.from_service_account_file(
+            CREDENTIALS_KEY_PATH, scopes=CREDENTIAL_SCOPES)
+        credentials.refresh(Request())
+        access_token = credentials.token
+
+    return access_token
+
+
 # checks the last modified dates of bq filter and bq metadata files from the bucket
 # and fetches the file data if the cached file data is outdated
 def pull_metadata():
     global bq_table_files, bq_total_entries
     status_code = 200
+    token = get_access_token()
     try:
         is_bq_metadata_updated = False
+        headers = {"Authorization": "Bearer {}".format(token)}
         for f in bq_table_files:
-            r = requests.head(bq_table_files[f]['file_path'] + '?t=' + str(randint(1000, 9999)))
+            r = requests.head(bq_table_files[f]['file_path'] + '?t=' + str(randint(1000, 9999)), headers=headers)
             r.raise_for_status()
             file_last_modified = datetime.strptime(r.headers['Last-Modified'], '%a, %d %b %Y %H:%M:%S GMT')
             if not bq_table_files[f]['file_data'] or \
