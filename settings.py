@@ -1,10 +1,9 @@
-import os
+import sys
 from os import getenv
 from flask_talisman import Talisman
 import requests
 from random import randint
 from datetime import datetime
-from google.oauth2 import service_account
 from google.auth.transport.requests import Request
 from requests.exceptions import ConnectionError
 
@@ -26,10 +25,6 @@ METADATA_URL = 'http://metadata.google.internal/computeMetadata/v1/'
 METADATA_HEADERS = {'Metadata-Flavor': 'Google'}
 SERVICE_ACCOUNT = getenv('SERVICE_ACCOUNT', 'default')
 CREDENTIAL_SCOPES = ["https://www.googleapis.com/auth/devstorage.read_only"]
-# Only for local development, not cloud-deployed:
-CREDENTIALS_KEY_PATH = getenv('CREDENTIALS_KEY_PATH', '../privatekey.json')
-is_local = None
-
 
 bq_table_files = {
     'bq_filters': {'last_modified': None, 'file_path': BQ_FILTER_FILE_PATH,
@@ -62,9 +57,8 @@ def setup_app(app):
 
 
 def get_access_token():
-    global is_local
     access_token = None
-    if is_local is None or not is_local:
+    if not IS_LOCAL:
         try:
             url = '{}instance/service-accounts/{}/token'.format(METADATA_URL, SERVICE_ACCOUNT)
             # Request an access token from the metadata server.
@@ -72,14 +66,14 @@ def get_access_token():
             r.raise_for_status()
             # Extract the access token from the response.
             access_token = r.json()['access_token']
-            is_local = False
         except ConnectionError as e:
-            is_local = True
-
-    if is_local:
-        credentials = service_account.Credentials.from_service_account_file(
-            CREDENTIALS_KEY_PATH, scopes=CREDENTIAL_SCOPES)
-        credentials.refresh(Request())
+            sys.exit(1)
+    else:
+        import google.auth
+        # When developing locally, developer must use "gcloud auth application-default login" to get
+        # the application default credentials working locally:
+        credentials, _ = google.auth.default(scopes=CREDENTIAL_SCOPES)
+        credentials.refresh(google.auth.transport.requests.Request())  # refresh token
         access_token = credentials.token
 
     return access_token
@@ -102,7 +96,7 @@ def pull_metadata():
                     not bq_table_files[f]['last_modified'] or (
                     bq_table_files[f]['last_modified'] and (bq_table_files[f]['last_modified'] < file_last_modified)):
                 bq_table_files[f]['last_modified'] = file_last_modified
-                bq_table_files[f]['file_data'] = requests.get(bq_table_files[f]['file_path']).json()
+                bq_table_files[f]['file_data'] = requests.get(bq_table_files[f]['file_path'], headers=headers).json()
                 if f == 'bq_metadata':
                     is_bq_metadata_updated = (not is_bq_metadata_updated)
         bq_total_entries = len(bq_table_files['bq_metadata']['file_data']) if bq_table_files['bq_metadata'][
