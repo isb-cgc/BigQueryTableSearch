@@ -12,7 +12,7 @@ TIER = getenv('TIER', 'dev')
 IS_LOCAL = bool(getenv('IS_LOCAL','False').lower() == 'true')
 BQ_METADATA_PROJ = getenv('BQ_METADATA_PROJ', 'isb-cgc-dev-1')
 BQ_ECOSYS_BUCKET = getenv('BQ_ECOSYS_BUCKET',
-                                  'https://storage.googleapis.com/webapp-static-files-isb-cgc-dev/bq_ecosys/')
+                                  'https://storage.googleapis.com/isb-cgc-dev-bqs-metadata/bq_ecosys/')
 BQ_FILTER_FILE_NAME = 'bq_meta_filters.json'
 BQ_FILTER_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_FILTER_FILE_NAME
 BQ_METADATA_FILE_NAME = 'bq_meta_data.json'
