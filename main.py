@@ -26,15 +26,17 @@ import settings
 import swagger_config
 import concurrent.futures
 import json
-from flasgger import Swagger
-from flasgger import swag_from
+from flasgger import Swagger, swag_from
 
+#if not settings.IS_APP_ENGINE:
+#    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(os.environ['SECURE_PATH'], 'privatekey.json')
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-#if os.environ.get('IS_GAE_DEPLOYMENT', 'False') != 'True':
-#    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(os.environ['SECURE_PATH'], 'privatekey.json')
-logger = logging.getLogger(__name__)
+if not settings.IS_APP_ENGINE:
+    from flask.logging import default_handler
+    logger.addHandler(default_handler)
 
 # landing page
 @app.route("/", methods=['POST', 'GET'])

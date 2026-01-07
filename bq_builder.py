@@ -17,7 +17,9 @@
 import re
 import settings
 from google.cloud.bigquery import ArrayQueryParameter, ScalarQueryParameter, StructQueryParameter
+import logging
 
+logger = logging.getLogger(__name__)
 
 # with the conditions (list of field-val tuples), build an sql where clause
 def build_where_clause(conditions):
@@ -180,8 +182,9 @@ def metadata_query(req):
     query_str_old += join_clause
     query_str_old += where_clause
 
-    print("DYNAMIC VERSION:\n {}".format(query_str_old))
-    print("PARAMETERIZED VERSION: {}".format(query_str))
+    logger.info("DYNAMIC VERSION:\n {}".format(query_str_old))
+    logger.info("PARAMETERIZED VERSION: {}".format(query_str))
+
 
     return query_str, parameters
 

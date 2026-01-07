@@ -9,18 +9,34 @@ from google.auth.transport.requests import Request
 from requests.exceptions import ConnectionError
 
 IS_APP_ENGINE = getenv("IS_APP_ENGINE", "false").lower() == "true"
+TIER = getenv('TIER', 'dev')
 
 if IS_APP_ENGINE:
     import google.cloud.logging
     client = google.cloud.logging_v2.Client()
     client.setup_logging()
+else:
+    from logging.config import dictConfig
+    dictConfig({
+        'version': 1,
+        'formatters': {'default': {
+            'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+        }},
+        'handlers': {'wsgi': {
+            'class': 'logging.StreamHandler',
+            'stream': 'ext://flask.logging.wsgi_errors_stream',
+            'formatter': 'default'
+        }},
+        'root': {
+            'level': 'DEBUG',
+            'handlers': ['wsgi']
+        }
+    })
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
+logger.setLevel(logging.DEBUG if TIER == 'dev' else logging.INFO)
 
 hsts_max_age = int(getenv('HSTS_MAX_AGE') or 3600)
-TIER = getenv('TIER', 'dev')
 IS_LOCAL = bool(getenv('IS_LOCAL','False').lower() == 'true')
 BQ_METADATA_PROJ = getenv('BQ_METADATA_PROJ', 'isb-cgc-dev-1')
 BQ_ECOSYS_BUCKET = getenv('BQ_ECOSYS_BUCKET',
