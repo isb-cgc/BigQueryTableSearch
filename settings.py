@@ -2,10 +2,22 @@ import sys
 from os import getenv
 from flask_talisman import Talisman
 import requests
+import logging
 from random import randint
 from datetime import datetime
 from google.auth.transport.requests import Request
 from requests.exceptions import ConnectionError
+
+IS_APP_ENGINE = getenv("IS_APP_ENGINE", "false").lower() == "true"
+
+if IS_APP_ENGINE:
+    import google.cloud.logging
+    client = google.cloud.logging_v2.Client()
+    client.setup_logging()
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 hsts_max_age = int(getenv('HSTS_MAX_AGE') or 3600)
 TIER = getenv('TIER', 'dev')
@@ -102,12 +114,15 @@ def pull_metadata():
         bq_total_entries = len(bq_table_files['bq_metadata']['file_data']) if bq_table_files['bq_metadata'][
             'file_data'] else 0
     except requests.exceptions.HTTPError as e:
+        logger.exception(e)
         error_message = 'HTTPError'
         status_code = e.response.status_code
     except requests.exceptions.ReadTimeout as e:
+        logger.exception(e)
         error_message = 'ReadTimeout'
         status_code = e.response.status_code
     except requests.exceptions.ConnectionError as e:
+        logger.exception(e)
         error_message = 'ConnectionError'
         status_code = e.response.status_code
     message = None
