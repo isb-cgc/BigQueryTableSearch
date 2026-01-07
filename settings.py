@@ -2,13 +2,41 @@ import sys
 from os import getenv
 from flask_talisman import Talisman
 import requests
+import logging
 from random import randint
 from datetime import datetime
 from google.auth.transport.requests import Request
 from requests.exceptions import ConnectionError
 
-hsts_max_age = int(getenv('HSTS_MAX_AGE') or 3600)
+IS_APP_ENGINE = getenv("IS_APP_ENGINE", "false").lower() == "true"
 TIER = getenv('TIER', 'dev')
+
+if IS_APP_ENGINE:
+    import google.cloud.logging
+    client = google.cloud.logging_v2.Client()
+    client.setup_logging()
+else:
+    from logging.config import dictConfig
+    dictConfig({
+        'version': 1,
+        'formatters': {'default': {
+            'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+        }},
+        'handlers': {'wsgi': {
+            'class': 'logging.StreamHandler',
+            'stream': 'ext://flask.logging.wsgi_errors_stream',
+            'formatter': 'default'
+        }},
+        'root': {
+            'level': 'DEBUG',
+            'handlers': ['wsgi']
+        }
+    })
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG if TIER == 'dev' else logging.INFO)
+
+hsts_max_age = int(getenv('HSTS_MAX_AGE') or 3600)
 IS_LOCAL = bool(getenv('IS_LOCAL','False').lower() == 'true')
 BQ_METADATA_PROJ = getenv('BQ_METADATA_PROJ', 'isb-cgc-dev-1')
 BQ_ECOSYS_BUCKET = getenv('BQ_ECOSYS_BUCKET',
@@ -102,12 +130,15 @@ def pull_metadata():
         bq_total_entries = len(bq_table_files['bq_metadata']['file_data']) if bq_table_files['bq_metadata'][
             'file_data'] else 0
     except requests.exceptions.HTTPError as e:
+        logger.exception(e)
         error_message = 'HTTPError'
         status_code = e.response.status_code
     except requests.exceptions.ReadTimeout as e:
+        logger.exception(e)
         error_message = 'ReadTimeout'
         status_code = e.response.status_code
     except requests.exceptions.ConnectionError as e:
+        logger.exception(e)
         error_message = 'ConnectionError'
         status_code = e.response.status_code
     message = None

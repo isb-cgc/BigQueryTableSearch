@@ -17,22 +17,26 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import requests
-from google.cloud import bigquery, logging
+from google.cloud import bigquery
+from google.cloud.bigquery import QueryJobConfig
+import logging
 from google.api_core.exceptions import BadRequest
 import bq_builder
 import settings
 import swagger_config
 import concurrent.futures
 import json
-from flasgger import Swagger
-from flasgger import swag_from
+from flasgger import Swagger, swag_from
 
+#if not settings.IS_APP_ENGINE:
+#    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(os.environ['SECURE_PATH'], 'privatekey.json')
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-#if os.environ.get('IS_GAE_DEPLOYMENT', 'False') != 'True':
-#    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(os.environ['SECURE_PATH'], 'privatekey.json')
-logging_client = logging.Client()
+if not settings.IS_APP_ENGINE:
+    from flask.logging import default_handler
+    logger.addHandler(default_handler)
 
 # landing page
 @app.route("/", methods=['POST', 'GET'])
@@ -77,9 +81,17 @@ def search_api():
         app.logger.error(f"[ERROR] {error_msg}")
     filtered_meta_data = []
     try:
-        query_statement = bq_builder.metadata_query(request)
+        query_statement, parameters = bq_builder.metadata_query(request)
         bigquery_client = bigquery.Client(project=settings.BQ_METADATA_PROJ)
-        query_job = bigquery_client.query(query_statement)
+
+        # Build Query Job Config
+        job_config = QueryJobConfig(allow_large_results=True, use_query_cache=False, priority='INTERACTIVE')
+
+        if parameters and len(parameters):
+            job_config.query_parameters = parameters
+            job_config.use_legacy_sql = False
+
+        query_job = bigquery_client.query(query_statement, job_config=job_config)
 
         result = query_job.result(timeout=30)
         filtered_meta_data = [json.loads(dict(row)['metadata']) for row in result]
