@@ -56,6 +56,8 @@ def setup_app(app):
         })
 
 
+# checks the last modified dates of bq filter and bq metadata files from the bucket
+# and fetches the file data if the cached file data is outdated
 def get_access_token():
     access_token = None
     if not IS_LOCAL:
