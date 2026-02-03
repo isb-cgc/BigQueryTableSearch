@@ -17,22 +17,26 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import requests
-from google.cloud import bigquery, logging
+from google.cloud import bigquery
+from google.cloud.bigquery import QueryJobConfig
+import logging
 from google.api_core.exceptions import BadRequest
 import bq_builder
 import settings
 import swagger_config
 import concurrent.futures
 import json
-from flasgger import Swagger
-from flasgger import swag_from
+from flasgger import Swagger, swag_from
 
+#if not settings.IS_APP_ENGINE:
+#    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(os.environ['SECURE_PATH'], 'privatekey.json')
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-#if os.environ.get('IS_GAE_DEPLOYMENT', 'False') != 'True':
-#    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(os.environ['SECURE_PATH'], 'privatekey.json')
-logging_client = logging.Client()
+if not settings.IS_APP_ENGINE:
+    from flask.logging import default_handler
+    logger.addHandler(default_handler)
 
 # landing page
 @app.route("/", methods=['POST', 'GET'])
@@ -73,31 +77,44 @@ def search(status=None):
 @app.route("/search_api", methods=['GET', 'POST'])
 def search_api():
     error_msg = settings.pull_metadata()
+    status_code = 200
     if error_msg:
         app.logger.error(f"[ERROR] {error_msg}")
     filtered_meta_data = []
     try:
-        query_statement = bq_builder.metadata_query(request)
+        query_statement, parameters = bq_builder.metadata_query(request)
         bigquery_client = bigquery.Client(project=settings.BQ_METADATA_PROJ)
-        query_job = bigquery_client.query(query_statement)
 
+        # Build Query Job Config
+        job_config = QueryJobConfig(allow_large_results=True, use_query_cache=False, priority='INTERACTIVE')
+
+        if parameters and len(parameters):
+            job_config.query_parameters = parameters
+            job_config.use_legacy_sql = False
+
+        query_job = bigquery_client.query(query_statement, job_config=job_config)
         result = query_job.result(timeout=30)
         filtered_meta_data = [json.loads(dict(row)['metadata']) for row in result]
-    except ValueError:
-        error_msg = 'An invalid query parameter was detected. Please revise your search criteria and search again.'
-        error_code = 400
-    except (concurrent.futures.TimeoutError, requests.exceptions.ReadTimeout):
-        error_msg = "Sorry, query job has timed out."
-        error_code = 408
-    except (BadRequest, Exception) as e:
+
+    except Exception as e:
+        status_code=400
         error_msg = "There was an error during the search."
-        error_code = 400
+        if isinstance(e, ValueError):
+            error_msg = 'An invalid query parameter was detected. Please revise your search criteria and search again.'
+        elif isinstance(e, concurrent.futures.TimeoutError) or isinstance(e, requests.exceptions.ReadTimeout):
+            error_msg = "Sorry, query job has timed out."
+            status_code = 408
+        logger.error(f"[ERROR] {error_msg}")
+        logger.exception(e)
+
     if error_msg:
-        app.logger.error(f"[ERROR] {error_msg}")
         response = jsonify({'message': error_msg})
-        response.status_code = error_code
-        return response
-    return jsonify(filtered_meta_data)
+    else:
+        response = jsonify(filtered_meta_data)
+
+    response.status_code = status_code
+
+    return response
 
 
 # fetches table's preview (up to 8 rows)
@@ -156,6 +173,7 @@ def get_filter_options(filter_type):
     status = 200
     filter_type_options = ['category', 'status', 'program', 'data_type', 'experimental_strategy', 'reference_genome',
                            'source', 'project_id']
+    filter_options = None
     try:
         settings.pull_metadata()
         filter_dic = settings.bq_table_files['bq_filters']
@@ -179,8 +197,8 @@ def get_filter_options(filter_type):
         status = 400
         response_obj = {'message': f"{e}"}
     except Exception as e:
-        status = e.response.status_code
-        response_obj = {'message': e.response}
+        status = 500
+        response_obj = {'message': f"{e}"}
     return jsonify(response_obj), status
 
 
@@ -196,3 +214,4 @@ settings.setup_app(app)
 swagger = Swagger(app, template=swagger_config.swagger_template,config=swagger_config.swagger_config)
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
+
