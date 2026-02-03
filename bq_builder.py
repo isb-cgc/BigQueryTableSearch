@@ -16,7 +16,9 @@
 
 import re
 import settings
+import logging
 
+logger = logging.getLogger(__name__)
 
 # with the conditions (list of field-val tuples), build an sql where clause
 def build_where_clause(conditions):

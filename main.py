@@ -17,22 +17,25 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import requests
-from google.cloud import bigquery, logging
+from google.cloud import bigquery
+import logging
 from google.api_core.exceptions import BadRequest
 import bq_builder
 import settings
 import swagger_config
 import concurrent.futures
 import json
-from flasgger import Swagger
-from flasgger import swag_from
+from flasgger import Swagger, swag_from
 
+#if not settings.IS_APP_ENGINE:
+#    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(os.environ['SECURE_PATH'], 'privatekey.json')
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-#if os.environ.get('IS_GAE_DEPLOYMENT', 'False') != 'True':
-#    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(os.environ['SECURE_PATH'], 'privatekey.json')
-logging_client = logging.Client()
+if not settings.IS_APP_ENGINE:
+    from flask.logging import default_handler
+    logger.addHandler(default_handler)
 
 # landing page
 @app.route("/", methods=['POST', 'GET'])
@@ -73,6 +76,7 @@ def search(status=None):
 @app.route("/search_api", methods=['GET', 'POST'])
 def search_api():
     error_msg = settings.pull_metadata()
+    status_code = 200
     if error_msg:
         app.logger.error(f"[ERROR] {error_msg}")
     filtered_meta_data = []
@@ -83,21 +87,26 @@ def search_api():
 
         result = query_job.result(timeout=30)
         filtered_meta_data = [json.loads(dict(row)['metadata']) for row in result]
-    except ValueError:
-        error_msg = 'An invalid query parameter was detected. Please revise your search criteria and search again.'
-        error_code = 400
-    except (concurrent.futures.TimeoutError, requests.exceptions.ReadTimeout):
-        error_msg = "Sorry, query job has timed out."
-        error_code = 408
-    except (BadRequest, Exception) as e:
+
+    except Exception as e:
+        status_code=400
         error_msg = "There was an error during the search."
-        error_code = 400
+        if isinstance(e, ValueError):
+            error_msg = 'An invalid query parameter was detected. Please revise your search criteria and search again.'
+        elif isinstance(e, concurrent.futures.TimeoutError) or isinstance(e, requests.exceptions.ReadTimeout):
+            error_msg = "Sorry, query job has timed out."
+            status_code = 408
+        logger.error(f"[ERROR] {error_msg}")
+        logger.exception(e)
+
     if error_msg:
-        app.logger.error(f"[ERROR] {error_msg}")
         response = jsonify({'message': error_msg})
-        response.status_code = error_code
-        return response
-    return jsonify(filtered_meta_data)
+    else:
+        response = jsonify(filtered_meta_data)
+
+    response.status_code = status_code
+
+    return response
 
 
 # fetches table's preview (up to 8 rows)
@@ -179,8 +188,8 @@ def get_filter_options(filter_type):
         status = 400
         response_obj = {'message': f"{e}"}
     except Exception as e:
-        status = e.response.status_code
-        response_obj = {'message': e.response}
+        status = 500
+        response_obj = {'message': f"{e}"}
     return jsonify(response_obj), status
 
 
