@@ -77,7 +77,7 @@ def search(status=None):
 @app.route("/search_api", methods=['GET', 'POST'])
 def search_api():
     error_msg = settings.pull_metadata()
-    error_code = 400
+    status_code = 200
     if error_msg:
         app.logger.error(f"[ERROR] {error_msg}")
     filtered_meta_data = []
@@ -93,22 +93,28 @@ def search_api():
             job_config.use_legacy_sql = False
 
         query_job = bigquery_client.query(query_statement, job_config=job_config)
-
         result = query_job.result(timeout=30)
         filtered_meta_data = [json.loads(dict(row)['metadata']) for row in result]
-    except ValueError:
-        error_msg = 'An invalid query parameter was detected. Please revise your search criteria and search again.'
-    except (concurrent.futures.TimeoutError, requests.exceptions.ReadTimeout):
-        error_msg = "Sorry, query job has timed out."
-        error_code = 408
-    except (BadRequest, Exception) as e:
+
+    except Exception as e:
+        status_code=400
         error_msg = "There was an error during the search."
+        if isinstance(e, ValueError):
+            error_msg = 'An invalid query parameter was detected. Please revise your search criteria and search again.'
+        elif isinstance(e, concurrent.futures.TimeoutError) or isinstance(e, requests.exceptions.ReadTimeout):
+            error_msg = "Sorry, query job has timed out."
+            status_code = 408
+        logger.error(f"[ERROR] {error_msg}")
+        logger.exception(e)
+
     if error_msg:
-        app.logger.error(f"[ERROR] {error_msg}")
         response = jsonify({'message': error_msg})
-        response.status_code = error_code
-        return response
-    return jsonify(filtered_meta_data)
+    else:
+        response = jsonify(filtered_meta_data)
+
+    response.status_code = status_code
+
+    return response
 
 
 # fetches table's preview (up to 8 rows)
@@ -208,3 +214,4 @@ settings.setup_app(app)
 swagger = Swagger(app, template=swagger_config.swagger_template,config=swagger_config.swagger_config)
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
+
