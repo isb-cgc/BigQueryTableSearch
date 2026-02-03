@@ -28,6 +28,8 @@ import concurrent.futures
 import json
 from flasgger import Swagger, swag_from
 
+# If Default App Credentials isn't working, make a JSON key for the local development service account and load it
+# manually by uncommenting these two lines:
 #if not settings.IS_APP_ENGINE:
 #    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(os.environ['SECURE_PATH'], 'privatekey.json')
 logger = logging.getLogger(__name__)
