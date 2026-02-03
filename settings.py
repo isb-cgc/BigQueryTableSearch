@@ -80,7 +80,7 @@ def setup_app(app):
                 'data:',
                 'blob:'
             ],
-            'font-src': ['\'self\'', '*.gstatic.com']
+            'font-src': ['\'self\'', '*.gstatic.com', '*.fontawesome.com']
         })
 
 
