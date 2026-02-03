@@ -77,6 +77,7 @@ def search(status=None):
 @app.route("/search_api", methods=['GET', 'POST'])
 def search_api():
     error_msg = settings.pull_metadata()
+    error_code = 400
     if error_msg:
         app.logger.error(f"[ERROR] {error_msg}")
     filtered_meta_data = []
@@ -97,13 +98,11 @@ def search_api():
         filtered_meta_data = [json.loads(dict(row)['metadata']) for row in result]
     except ValueError:
         error_msg = 'An invalid query parameter was detected. Please revise your search criteria and search again.'
-        error_code = 400
     except (concurrent.futures.TimeoutError, requests.exceptions.ReadTimeout):
         error_msg = "Sorry, query job has timed out."
         error_code = 408
     except (BadRequest, Exception) as e:
         error_msg = "There was an error during the search."
-        error_code = 400
     if error_msg:
         app.logger.error(f"[ERROR] {error_msg}")
         response = jsonify({'message': error_msg})
@@ -168,6 +167,7 @@ def get_filter_options(filter_type):
     status = 200
     filter_type_options = ['category', 'status', 'program', 'data_type', 'experimental_strategy', 'reference_genome',
                            'source', 'project_id']
+    filter_options = None
     try:
         settings.pull_metadata()
         filter_dic = settings.bq_table_files['bq_filters']
@@ -191,8 +191,8 @@ def get_filter_options(filter_type):
         status = 400
         response_obj = {'message': f"{e}"}
     except Exception as e:
-        status = e.response.status_code
-        response_obj = {'message': e.response}
+        status = 500
+        response_obj = {'message': f"{e}"}
     return jsonify(response_obj), status
 
 
