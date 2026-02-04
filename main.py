@@ -103,7 +103,7 @@ def search_api():
         error_msg = "There was an error during the search."
         if isinstance(e, ValueError):
             error_msg = 'An invalid query parameter was detected. Please revise your search criteria and search again.'
-        elif isinstance(e, concurrent.futures.TimeoutError) or isinstance(e, requests.exceptions.ReadTimeout):
+        elif isinstance(e, (concurrent.futures.TimeoutError, requests.exceptions.ReadTimeout)):
             error_msg = "Sorry, query job has timed out."
             status_code = 408
         logger.error(f"[ERROR] {error_msg}")
@@ -149,20 +149,22 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
                     'message': f'No record has been found for table {proj_id}.{dataset_id}.{table_id}.'
                 }
 
-    except ValueError as e:
-        status = e.response.status_code
-        result = {
-            'message': "ValueError"
-        }
     except Exception as e:
-        status = e.response.status_code
+        logger.error(f"[ERROR] {e}")
+        logger.exception(e)
+        status = 500
+        err_type = "Error"
+        if isinstance(e, ValueError):
+            status = 400
+            err_type = "ValueError"
         result = {
-            'message': "Exception"
+            'message': err_type
         }
-        print(e)
+
     if status != 200:
-        app.logger.error(
-            f"ERROR While attempting to retrieve preview data for {proj_id}.{dataset_id}.{table_id} table: [{status}] {result['message']}")
+        logger.error(
+            f"[ERROR] While attempting to retrieve preview data for {proj_id}.{dataset_id}.{table_id} table: [{status}] {result['message']}")
+
     response = jsonify(result)
     response.status_code = status
     return response
@@ -195,13 +197,21 @@ def get_filter_options(filter_type):
                 "options": options
             }
         response_obj = filter_options
-    except ValueError as e:
-        status = 400
-        response_obj = {'message': f"{e}"}
+
     except Exception as e:
+        logger.error(f"[ERROR] {e}")
+        logger.exception(e)
         status = 500
-        response_obj = {'message': f"{e}"}
-    return jsonify(response_obj), status
+        err_type = "Error"
+        if isinstance(e, ValueError):
+            status = 400
+            err_type = "ValueError"
+        response_obj = {'message': f"{status} {err_type}: {e}"}
+
+    response = jsonify(response_obj)
+    response.status_code = status
+
+    return response
 
 
 # handle 404 error
