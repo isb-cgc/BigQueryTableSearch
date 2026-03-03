@@ -129,18 +129,15 @@ def pull_metadata():
                     is_bq_metadata_updated = (not is_bq_metadata_updated)
         bq_total_entries = len(bq_table_files['bq_metadata']['file_data']) if bq_table_files['bq_metadata'][
             'file_data'] else 0
-    except requests.exceptions.HTTPError as e:
+        error_message = None
+    except Exception as e:
+        logger.error("[ERROR] While trying to pull metadata:")
         logger.exception(e)
-        error_message = 'HTTPError'
-        status_code = e.response.status_code
-    except requests.exceptions.ReadTimeout as e:
-        logger.exception(e)
-        error_message = 'ReadTimeout'
-        status_code = e.response.status_code
-    except requests.exceptions.ConnectionError as e:
-        logger.exception(e)
-        error_message = 'ConnectionError'
-        status_code = e.response.status_code
+        status_code = 500
+        error_message = "Error"
+        if isinstance(e, (requests.exceptions.HTTPError, requests.exceptions.Timeout, requests.exceptions.ConnectionError)):
+            status_code = e.response.status_code
+            error_message = type(e).__name__
     message = None
     if status_code != 200:
         bq_table_files['bq_filters']['file_data'] = None
