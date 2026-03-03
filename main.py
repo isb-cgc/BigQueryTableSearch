@@ -18,6 +18,7 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import requests
 from google.cloud import bigquery
+from google.cloud.bigquery import QueryJobConfig
 import logging
 from google.api_core.exceptions import BadRequest
 import bq_builder
@@ -81,10 +82,17 @@ def search_api():
         app.logger.error(f"[ERROR] {error_msg}")
     filtered_meta_data = []
     try:
-        query_statement = bq_builder.metadata_query(request)
+        query_statement, parameters = bq_builder.metadata_query(request)
         bigquery_client = bigquery.Client(project=settings.BQ_METADATA_PROJ)
-        query_job = bigquery_client.query(query_statement)
 
+        # Build Query Job Config
+        job_config = QueryJobConfig(allow_large_results=True, use_query_cache=False, priority='INTERACTIVE')
+
+        if parameters and len(parameters):
+            job_config.query_parameters = parameters
+            job_config.use_legacy_sql = False
+
+        query_job = bigquery_client.query(query_statement, job_config=job_config)
         result = query_job.result(timeout=30)
         filtered_meta_data = [json.loads(dict(row)['metadata']) for row in result]
 
@@ -165,6 +173,7 @@ def get_filter_options(filter_type):
     status = 200
     filter_type_options = ['category', 'status', 'program', 'data_type', 'experimental_strategy', 'reference_genome',
                            'source', 'project_id']
+    filter_options = None
     try:
         settings.pull_metadata()
         filter_dic = settings.bq_table_files['bq_filters']
@@ -205,3 +214,4 @@ settings.setup_app(app)
 swagger = Swagger(app, template=swagger_config.swagger_template,config=swagger_config.swagger_config)
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
+
