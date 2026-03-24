@@ -18,6 +18,7 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import requests
 from google.cloud import bigquery
+from google.cloud.bigquery import QueryJobConfig
 import logging
 from google.api_core.exceptions import BadRequest
 import bq_builder
@@ -27,6 +28,8 @@ import concurrent.futures
 import json
 from flasgger import Swagger, swag_from
 
+# If Default App Credentials isn't working, make a JSON key for the local development service account and load it
+# manually by uncommenting these two lines:
 #if not settings.IS_APP_ENGINE:
 #    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(os.environ['SECURE_PATH'], 'privatekey.json')
 logger = logging.getLogger(__name__)
@@ -81,10 +84,17 @@ def search_api():
         app.logger.error(f"[ERROR] {error_msg}")
     filtered_meta_data = []
     try:
-        query_statement = bq_builder.metadata_query(request)
+        query_statement, parameters = bq_builder.metadata_query(request)
         bigquery_client = bigquery.Client(project=settings.BQ_METADATA_PROJ)
-        query_job = bigquery_client.query(query_statement)
 
+        # Build Query Job Config
+        job_config = QueryJobConfig(allow_large_results=True, use_query_cache=False, priority='INTERACTIVE')
+
+        if parameters and len(parameters):
+            job_config.query_parameters = parameters
+            job_config.use_legacy_sql = False
+
+        query_job = bigquery_client.query(query_statement, job_config=job_config)
         result = query_job.result(timeout=30)
         filtered_meta_data = [json.loads(dict(row)['metadata']) for row in result]
 
@@ -93,7 +103,7 @@ def search_api():
         error_msg = "There was an error during the search."
         if isinstance(e, ValueError):
             error_msg = 'An invalid query parameter was detected. Please revise your search criteria and search again.'
-        elif isinstance(e, concurrent.futures.TimeoutError) or isinstance(e, requests.exceptions.ReadTimeout):
+        elif isinstance(e, (concurrent.futures.TimeoutError, requests.exceptions.ReadTimeout)):
             error_msg = "Sorry, query job has timed out."
             status_code = 408
         logger.error(f"[ERROR] {error_msg}")
@@ -139,20 +149,22 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
                     'message': f'No record has been found for table {proj_id}.{dataset_id}.{table_id}.'
                 }
 
-    except ValueError as e:
-        status = e.response.status_code
-        result = {
-            'message': "ValueError"
-        }
     except Exception as e:
-        status = e.response.status_code
+        logger.error(f"[ERROR] {e}")
+        logger.exception(e)
+        status = 500
+        err_type = "Error"
+        if isinstance(e, ValueError):
+            status = 400
+            err_type = "ValueError"
         result = {
-            'message': "Exception"
+            'message': err_type
         }
-        print(e)
+
     if status != 200:
-        app.logger.error(
-            f"ERROR While attempting to retrieve preview data for {proj_id}.{dataset_id}.{table_id} table: [{status}] {result['message']}")
+        logger.error(
+            f"[ERROR] While attempting to retrieve preview data for {proj_id}.{dataset_id}.{table_id} table: [{status}] {result['message']}")
+
     response = jsonify(result)
     response.status_code = status
     return response
@@ -165,6 +177,7 @@ def get_filter_options(filter_type):
     status = 200
     filter_type_options = ['category', 'status', 'program', 'data_type', 'experimental_strategy', 'reference_genome',
                            'source', 'project_id']
+    filter_options = None
     try:
         settings.pull_metadata()
         filter_dic = settings.bq_table_files['bq_filters']
@@ -184,13 +197,21 @@ def get_filter_options(filter_type):
                 "options": options
             }
         response_obj = filter_options
-    except ValueError as e:
-        status = 400
-        response_obj = {'message': f"{e}"}
+
     except Exception as e:
+        logger.error(f"[ERROR] {e}")
+        logger.exception(e)
         status = 500
-        response_obj = {'message': f"{e}"}
-    return jsonify(response_obj), status
+        err_type = "Error"
+        if isinstance(e, ValueError):
+            status = 400
+            err_type = "ValueError"
+        response_obj = {'message': f"{status} {err_type}: {e}"}
+
+    response = jsonify(response_obj)
+    response.status_code = status
+
+    return response
 
 
 # handle 404 error
@@ -205,3 +226,4 @@ settings.setup_app(app)
 swagger = Swagger(app, template=swagger_config.swagger_template,config=swagger_config.swagger_config)
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
+
