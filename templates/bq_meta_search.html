@@ -85,6 +85,16 @@
                         </select>
                     </div>
                     <div>
+                        <label class="form-label">Species</label>
+                        <select multiple data-placeholder="Choose Species..."
+                                class="autocomplete_select_box form-select bq-select"
+                                data-column-name="species">
+                            {% for option in bq_filters.species.options %}
+                            <option value="{{ option.value }}">{{ option.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
                         <label class="form-label">Source</label>
                         <select multiple data-placeholder="Choose Sources..."
                                 class="autocomplete_select_box form-select bq-select"

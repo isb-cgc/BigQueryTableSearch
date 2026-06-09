@@ -152,7 +152,7 @@ def metadata_query(req):
         req_data = req.args.to_dict(flat=False)
     r_filters = ['description', 'friendlyName', 'projectId', 'datasetId', 'tableId', 'include_always_newest']
     l_filters = ['status', 'category', 'experimental_strategy', 'data_type', 'source', 'program', 'reference_genome',
-                 'labels']
+                 'labels', 'species']
     f_filters = ['field_name']
     parameters = []
     where_clause, params, where_clause_param = build_where_clause(get_conditions(req_data, r_filters))
