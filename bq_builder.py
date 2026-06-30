@@ -42,6 +42,7 @@ def build_where_clause(conditions):
         )
         if k == 'include_always_newest':
             if vals == 'false':
+                clauses.append("(NOT ENDS_WITH(LOWER(R.tableId), '_current'))")
                 where_clause += f'{and_or_where} NOT ENDS_WITH(LOWER(R.tableId), \'_current\')\n'
                 i += 1
         else:
