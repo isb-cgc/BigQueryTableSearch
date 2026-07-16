@@ -17,8 +17,9 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import requests
-from google.cloud import bigquery
-from google.cloud.bigquery import QueryJobConfig
+#from google.cloud import bigquery
+#from google.cloud.bigquery import QueryJobConfig
+import bq_proxy
 import logging
 from google.api_core.exceptions import BadRequest
 import bq_builder
@@ -85,17 +86,7 @@ def search_api():
     filtered_meta_data = []
     try:
         query_statement, parameters = bq_builder.metadata_query(request)
-        bigquery_client = bigquery.Client(project=settings.BQ_METADATA_PROJ)
-
-        # Build Query Job Config
-        job_config = QueryJobConfig(allow_large_results=True, use_query_cache=False, priority='INTERACTIVE')
-
-        if parameters and len(parameters):
-            job_config.query_parameters = parameters
-            job_config.use_legacy_sql = False
-
-        query_job = bigquery_client.query(query_statement, job_config=job_config)
-        result = query_job.result(timeout=30)
+        result = bq_proxy.query_for_result(settings, parameters, query_statement)
         filtered_meta_data = [json.loads(dict(row)['metadata']) for row in result]
 
     except Exception as e:
@@ -133,8 +124,7 @@ def get_tbl_preview(proj_id, dataset_id, table_id):
                 'message': "One or more required parameters (project id, dataset_id or table_id) were not supplied."
             }
         else:
-            client = bigquery.Client(project=proj_id)
-            rows_iter = client.list_rows(f'{proj_id}.{dataset_id}.{table_id}', max_results=max_row)
+            rows_iter = bq_proxy.list_rows(proj_id, dataset_id, table_id, max_row)
             if rows_iter and rows_iter.total_rows:
                 schema_fields = [schema.to_api_repr() for schema in list(rows_iter.schema)]
                 tbl_data = [dict(row) for row in list(rows_iter)]
