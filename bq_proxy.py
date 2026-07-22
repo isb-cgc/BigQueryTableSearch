@@ -67,15 +67,15 @@ def _probe_sql_table(use_conn, select_query):
   count = 0
   for r in rows:
       if count < 10:
-            print(r)
+            logger.info(r)
       elif count % 1000 == 0:
-        print(count)
+        logger.info(count)
       count += 1
   cursor2.close()
   return
 
 def build_the_local_proxy():
-  print ("SQLite Version is:", sqlite3.sqlite_version)
+  logger.info(f"SQLite Version is: {sqlite3.sqlite_version}")
 
   refs_table = {
     'bq_query': 'SELECT * FROM `isb-cgc.bqs_metadata.BQS_TABLE_REFS`',
@@ -152,19 +152,19 @@ def query_for_result(settings, parameters, query_statement):
     job_config = QueryJobConfig(allow_large_results=True, use_query_cache=False, priority='INTERACTIVE')
 
     if parameters and len(parameters):
-        print("Parameters")
-        print(parameters)
+        logger.info("Parameters")
+        logger.info(parameters)
         job_config.query_parameters = parameters
         job_config.use_legacy_sql = False
 
-    print("Query")
-    print(query_statement)
+    logger.info("Query")
+    logger.info(query_statement)
     query_job = bigquery_client.query(query_statement, job_config=job_config)
     result = query_job.result(timeout=30)
     return result
 
 def list_rows(proj_id, dataset_id, table_id, max_row):
-    print(proj_id, dataset_id, table_id, max_row)
+    logger.info(f"{proj_id} {dataset_id} {table_id} {max_row}")
     client = bigquery.Client(project=proj_id)
     rows_iter = client.list_rows(f'{proj_id}.{dataset_id}.{table_id}', max_results=max_row)
     return rows_iter
