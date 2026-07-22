@@ -216,7 +216,7 @@ settings.setup_app(app)
 swagger = Swagger(app, template=swagger_config.swagger_template,config=swagger_config.swagger_config)
 
 logger.info("Start to build local proxy")
-bq_proxy.build_the_local_proxy()
+#bq_proxy.build_the_local_proxy()
 logger.info("Finish building local proxy")
 
 if __name__ == '__main__':
