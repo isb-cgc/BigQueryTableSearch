@@ -18,6 +18,7 @@ import csv
 import sqlite3
 import io
 import sys
+import settings
 from google.cloud import bigquery
 from google.cloud.bigquery import QueryJobConfig
 import logging
@@ -78,7 +79,7 @@ def build_the_local_proxy():
   logger.info(f"SQLite Version is: {sqlite3.sqlite_version}")
 
   refs_table = {
-    'bq_query': 'SELECT * FROM `isb-cgc.bqs_metadata.BQS_TABLE_REFS`',
+    'bq_query': f'SELECT * FROM `{settings.BQ_METADATA_PROJ}.bqs_metadata.BQS_TABLE_REFS`',
     'table_create': '''CREATE TABLE BQS_TABLE_REFS (
         key_id INTEGER PRIMARY KEY AUTOINCREMENT,
         id TEXT NOT NULL,
@@ -96,7 +97,7 @@ def build_the_local_proxy():
   }
 
   schema_table = {
-    'bq_query': 'SELECT * FROM `isb-cgc.bqs_metadata.BQS_SCHEMA_FIELDS`',
+    'bq_query': f'SELECT * FROM `{settings.BQ_METADATA_PROJ}.bqs_metadata.BQS_SCHEMA_FIELDS`',
     'table_create': '''CREATE TABLE BQS_SCHEMA_FIELDS (
         key_id INTEGER PRIMARY KEY AUTOINCREMENT,
         id TEXT NOT NULL,
@@ -107,7 +108,7 @@ def build_the_local_proxy():
   }
 
   label_table = {
-    'bq_query': 'SELECT * FROM `isb-cgc.bqs_metadata.BQS_LABELS`',
+    'bq_query': f'SELECT * FROM `{settings.BQ_METADATA_PROJ}.bqs_metadata.BQS_LABELS`',
     'table_create': '''CREATE TABLE BQS_LABELS (
         key_id INTEGER PRIMARY KEY AUTOINCREMENT,
         id TEXT NOT NULL,
