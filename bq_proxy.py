@@ -139,7 +139,7 @@ def build_the_local_proxy():
     #_probe_sql_table(conn, table['dump_query'])
 
   # closing the database connection
-  #conn.close()
+  conn.close()
 
   # database disappears (or does it??)
   hold_until_exit_conn.close()
