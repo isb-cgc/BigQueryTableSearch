@@ -50,7 +50,7 @@ def _load_bq_table(client, use_conn, pull_query, create_query, insert_query):
   contents = csv.reader(file_obj)
 
   # Importing the contents of the file
-  #cursor1.executemany(insert_query, contents)
+  cursor1.executemany(insert_query, contents)
   use_conn.commit()
   del file_obj
   cursor1.close()
@@ -67,9 +67,9 @@ def _probe_sql_table(use_conn, select_query):
   # Output to the console screen
   count = 0
   for r in rows:
-      if count < 10:
+      if count < 1:
             logger.info(r)
-      elif count % 1000 == 0:
+      elif count % 5000 == 0:
         logger.info(count)
       count += 1
   cursor2.close()
@@ -136,6 +136,8 @@ def build_the_local_proxy():
 
   for table in db_tables:
     _load_bq_table(client, conn, table['bq_query'], table['table_create'], table['insert_records'])
+    da_query = table['bq_query']
+    logger.info(f"done with load: {da_query}")
     #_probe_sql_table(conn, table['dump_query'])
 
   # closing the database connection
