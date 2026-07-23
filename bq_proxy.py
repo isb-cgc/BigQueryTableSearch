@@ -44,14 +44,14 @@ def _load_bq_table(client, use_conn, pull_query, create_query, insert_query):
   file_obj.seek(0)
 
   # Create the sqlite table:
-  #cursor1.execute(create_query)
+  cursor1.execute(create_query)
 
   # Reading the contents of the in-memory CSV file
   contents = csv.reader(file_obj)
 
   # Importing the contents of the file
   #cursor1.executemany(insert_query, contents)
-  #use_conn.commit()
+  use_conn.commit()
   del file_obj
   cursor1.close()
   return
