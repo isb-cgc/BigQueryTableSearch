@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 #
 
 def _load_bq_table(client, use_conn, pull_query, create_query, insert_query):
-  cursor1 = use_conn.cursor()
+  #cursor1 = use_conn.cursor()
 
   # Load table from BQ into in-memory file:
   query_job = client.query(pull_query)
@@ -44,16 +44,16 @@ def _load_bq_table(client, use_conn, pull_query, create_query, insert_query):
   file_obj.seek(0)
 
   # Create the sqlite table:
-  cursor1.execute(create_query)
+  #cursor1.execute(create_query)
 
   # Reading the contents of the in-memory CSV file
   contents = csv.reader(file_obj)
 
   # Importing the contents of the file
-  cursor1.executemany(insert_query, contents)
-  use_conn.commit()
+  #cursor1.executemany(insert_query, contents)
+  #use_conn.commit()
   del file_obj
-  cursor1.close()
+  #cursor1.close()
   return
 
 #
@@ -123,11 +123,11 @@ def build_the_local_proxy():
 
   # Create a NAMED in-memory database with shared cache. Note this connection
   # MUST BE KEPT OPEN TO KEEP THE DB IN MEMORY
-  hold_until_exit_conn = sqlite3.connect("file:bill_db?mode=memory&cache=shared", uri=True)
+  #hold_until_exit_conn = sqlite3.connect("file:bill_db?mode=memory&cache=shared", uri=True)
 
 
   # Connect to the SAME named in-memory database with conn2
-  conn = sqlite3.connect("file:bill_db?mode=memory&cache=shared", uri=True)
+  conn = None #sqlite3.connect("file:bill_db?mode=memory&cache=shared", uri=True)
 
   # Construct a BigQuery client object.
   client = bigquery.Client()
@@ -139,7 +139,7 @@ def build_the_local_proxy():
     _probe_sql_table(conn, table['dump_query'])
 
   # closing the database connection
-  conn.close()
+  #conn.close()
 
   # database disappears (or does it??)
   #hold_until_exit_conn.close()
