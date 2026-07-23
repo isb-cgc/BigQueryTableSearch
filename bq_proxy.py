@@ -137,14 +137,14 @@ def build_the_local_proxy():
   for table in db_tables:
     _load_bq_table(client, conn, table['bq_query'], table['table_create'], table['insert_records'])
     da_query = table['bq_query']
+    _probe_sql_table(conn, table['dump_query'])
     logger.info(f"done with load: {da_query}")
-    #_probe_sql_table(conn, table['dump_query'])
 
   # closing the database connection
   conn.close()
 
   # database disappears (or does it??)
-  hold_until_exit_conn.close()
+  #hold_until_exit_conn.close()
   return
 
 # with the conditions (list of field-val tuples), build an sql where clause
