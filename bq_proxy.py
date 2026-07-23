@@ -136,7 +136,7 @@ def build_the_local_proxy():
 
   for table in db_tables:
     _load_bq_table(client, conn, table['bq_query'], table['table_create'], table['insert_records'])
-    _probe_sql_table(conn, table['dump_query'])
+    #_probe_sql_table(conn, table['dump_query'])
 
   # closing the database connection
   #conn.close()
