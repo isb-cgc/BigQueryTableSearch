@@ -187,7 +187,7 @@ def metadata_query(req):
     logger.info("PARAMETERIZED VERSION: {}".format(query_str))
 
 
-    return query_str, parameters
+    return query_str, parameters, query_str_old
 
 
 # returns true if the field_val is wrapped with single quotes or double quotes

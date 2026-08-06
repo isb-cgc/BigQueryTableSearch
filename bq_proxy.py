@@ -147,24 +147,50 @@ def build_the_local_proxy():
   #hold_until_exit_conn.close()
   return
 
-# with the conditions (list of field-val tuples), build an sql where clause
-def query_for_result(settings, parameters, query_statement):
-    bigquery_client = bigquery.Client(project=settings.BQ_METADATA_PROJ)
+# Do the query
+def query_for_result(loc_settings, parameters, query_statement, old_query):
+   #
+   # Gotta change the table names to drop the project and dataset
+   #
+    foo = 1
+    if foo > 0:
+        drop_me = f'{loc_settings.BQ_METADATA_PROJ}.bqs_metadata.'
 
-    # Build Query Job Config
-    job_config = QueryJobConfig(allow_large_results=True, use_query_cache=False, priority='INTERACTIVE')
+        cache_query = old_query.replace(drop_me, "")
+        logger.info("Cache Query")
+        logger.info(cache_query)
+        # Connect to the SAME named in-memory database with conn2
+        conn = sqlite3.connect("file:bill_db?mode=memory&cache=shared", uri=True)
+        cursor2 = conn.cursor()
+        rows = cursor2.execute(cache_query).fetchall()
+        retval = []
 
-    if parameters and len(parameters):
-        logger.info("Parameters")
-        logger.info(parameters)
-        job_config.query_parameters = parameters
-        job_config.use_legacy_sql = False
+        # Output to the console screen
+        count = 0
+        for r in rows:
+            retval.append(r)
+            count += 1
+        cursor2.close()
+        logger.info(f"Result is {count} rows")
+        return retval
+    else:
+        bigquery_client = bigquery.Client(project=loc_settings.BQ_METADATA_PROJ)
 
-    logger.info("Query")
-    logger.info(query_statement)
-    query_job = bigquery_client.query(query_statement, job_config=job_config)
-    result = query_job.result(timeout=30)
-    return result
+        # Build Query Job Config
+        job_config = QueryJobConfig(allow_large_results=True, use_query_cache=False, priority='INTERACTIVE')
+
+        if parameters and len(parameters):
+            logger.info("Parameters")
+            logger.info(parameters)
+            job_config.query_parameters = parameters
+            job_config.use_legacy_sql = False
+
+
+        logger.info("Query")
+        logger.info(query_statement)
+        query_job = bigquery_client.query(query_statement, job_config=job_config)
+        result = query_job.result(timeout=30)
+        return result
 
 def list_rows(proj_id, dataset_id, table_id, max_row):
     logger.info(f"{proj_id} {dataset_id} {table_id} {max_row}")
