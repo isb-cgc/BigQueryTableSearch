@@ -157,6 +157,8 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
         drop_me = f'{loc_settings.BQ_METADATA_PROJ}.bqs_metadata.'
 
         cache_query = old_query.replace(drop_me, "")
+        cache_query = cache_query.replace("ENDS_WITH(LOWER(R.tableId), '_current')",
+                                          "LOWER(R.tableId) LIKE '%_current'")
         logger.info("Cache Query")
         logger.info(cache_query)
         # Connect to the SAME named in-memory database with conn2
