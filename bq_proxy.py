@@ -194,10 +194,11 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
         logger.info(query_statement)
         query_job = bigquery_client.query(query_statement, job_config=job_config)
         result = query_job.result(timeout=30)
+        filtered_meta_data = []
         for row in result:
             logger.info(row)
-        filtered_meta_data = [json.loads(dict(row)['metadata']) for row in result]
-        logger.info(filtered_meta_data)
+            filtered_meta_data.append(json.loads(dict(row)['metadata']))
+        #logger.info(filtered_meta_data)
         return filtered_meta_data
 
 def list_rows(proj_id, dataset_id, table_id, max_row):
