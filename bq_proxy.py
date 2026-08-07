@@ -153,8 +153,8 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
    #
    # Gotta change the table names to drop the project and dataset
    #
-    foo = 1
-    if foo > 0:
+    use_cache = False
+    if use_cache:
         drop_me = f'{loc_settings.BQ_METADATA_PROJ}.bqs_metadata.'
 
         cache_query = old_query.replace(drop_me, "")
@@ -171,7 +171,7 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
         # Output to the console screen
         count = 0
         for r in rows:
-            retval.append(r)
+            retval.append(json.loads(r[0]))
             logger.info(r)
             count += 1
         cursor2.close()
@@ -194,6 +194,8 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
         logger.info(query_statement)
         query_job = bigquery_client.query(query_statement, job_config=job_config)
         result = query_job.result(timeout=30)
+        for row in result:
+            logger.info(row)
         filtered_meta_data = [json.loads(dict(row)['metadata']) for row in result]
         logger.info(filtered_meta_data)
         return filtered_meta_data
