@@ -19,6 +19,7 @@ import sqlite3
 import io
 import sys
 import settings
+import json
 from google.cloud import bigquery
 from google.cloud.bigquery import QueryJobConfig
 import logging
@@ -152,7 +153,7 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
    #
    # Gotta change the table names to drop the project and dataset
    #
-    foo = 1
+    foo = 0
     if foo > 0:
         drop_me = f'{loc_settings.BQ_METADATA_PROJ}.bqs_metadata.'
 
@@ -192,7 +193,9 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
         logger.info(query_statement)
         query_job = bigquery_client.query(query_statement, job_config=job_config)
         result = query_job.result(timeout=30)
-        return result
+        filtered_meta_data = [json.loads(dict(row)['metadata']) for row in result]
+        logger.info(filtered_meta_data)
+        return filtered_meta_data
 
 def list_rows(proj_id, dataset_id, table_id, max_row):
     logger.info(f"{proj_id} {dataset_id} {table_id} {max_row}")
