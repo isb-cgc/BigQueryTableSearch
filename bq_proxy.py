@@ -153,7 +153,7 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
    #
    # Gotta change the table names to drop the project and dataset
    #
-    foo = 0
+    foo = 1
     if foo > 0:
         drop_me = f'{loc_settings.BQ_METADATA_PROJ}.bqs_metadata.'
 
@@ -172,6 +172,7 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
         count = 0
         for r in rows:
             retval.append(r)
+            logger.info(r)
             count += 1
         cursor2.close()
         logger.info(f"Result is {count} rows")
