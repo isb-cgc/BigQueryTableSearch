@@ -197,7 +197,10 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
         filtered_meta_data = []
         for row in result:
             logger.info(row)
-            filtered_meta_data.append(json.loads(dict(row)['metadata']))
+            appendee = json.loads(dict(row)['metadata'])
+            logger.info(appendee)
+            logger.info(type(appendee))
+            filtered_meta_data.append(appendee)
         #logger.info(filtered_meta_data)
         return filtered_meta_data
 
