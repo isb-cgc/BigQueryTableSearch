@@ -153,7 +153,7 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
    #
    # Gotta change the table names to drop the project and dataset
    #
-    use_cache = False
+    use_cache = True
     if use_cache:
         drop_me = f'{loc_settings.BQ_METADATA_PROJ}.bqs_metadata.'
 
@@ -171,7 +171,11 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
         # Output to the console screen
         count = 0
         for r in rows:
-            retval.append(json.loads(r[0]))
+            logger.info(type(r[0]))
+            appendee = json.loads(r[0])
+            logger.info(appendee)
+            logger.info(type(appendee))
+            retval.append(appendee)
             logger.info(r)
             count += 1
         cursor2.close()
