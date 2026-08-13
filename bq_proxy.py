@@ -162,6 +162,12 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
                                           "LOWER(R.tableId) LIKE '%_current'")
         logger.info("Cache Query")
         logger.info(cache_query)
+        if parameters and len(parameters):
+            logger.info("Parameters")
+            logger.info(parameters)
+        logger.info("Param Query")
+        logger.info(query_statement)
+
         # Connect to the SAME named in-memory database with conn2
         conn = sqlite3.connect("file:bill_db?mode=memory&cache=shared", uri=True)
         cursor2 = conn.cursor()
