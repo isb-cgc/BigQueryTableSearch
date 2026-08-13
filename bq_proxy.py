@@ -160,7 +160,7 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
         cache_query = query_statement.replace(drop_me, "")
         cache_query = cache_query.replace("ENDS_WITH(LOWER(R.tableId), '_current')",
                                           "LOWER(R.tableId) LIKE '%_current'")
-        cache_query = cache_query.replace("&", ":")
+        cache_query = cache_query.replace("@", ":")
 
         cache_parameters = None
         if parameters and len(parameters):
