@@ -162,6 +162,12 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
                                           "LOWER(R.tableId) LIKE '%_current'")
         logger.info("Cache Query")
         logger.info(cache_query)
+        if parameters and len(parameters):
+            logger.info("Parameters")
+            logger.info(parameters)
+        logger.info("Param Query")
+        logger.info(query_statement)
+
         # Connect to the SAME named in-memory database with conn2
         conn = sqlite3.connect("file:bill_db?mode=memory&cache=shared", uri=True)
         cursor2 = conn.cursor()
@@ -171,15 +177,14 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
         # Output to the console screen
         count = 0
         for r in rows:
-            logger.info(type(r[0]))
+            #logger.info(type(r[0]))
             appendee = json.loads(r[0])
-            logger.info(appendee)
-            logger.info(type(appendee))
+            #logger.info(appendee)
+            #logger.info(type(appendee))
             retval.append(appendee)
-            logger.info(r)
             count += 1
         cursor2.close()
-        logger.info(f"Result is {count} rows")
+        #logger.info(f"Result is {count} rows")
         return retval
     else:
         bigquery_client = bigquery.Client(project=loc_settings.BQ_METADATA_PROJ)
@@ -200,10 +205,10 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
         result = query_job.result(timeout=30)
         filtered_meta_data = []
         for row in result:
-            logger.info(row)
+            #logger.info(row)
             appendee = json.loads(dict(row)['metadata'])
-            logger.info(appendee)
-            logger.info(type(appendee))
+            #logger.info(appendee)
+            #logger.info(type(appendee))
             filtered_meta_data.append(appendee)
         #logger.info(filtered_meta_data)
         return filtered_meta_data
