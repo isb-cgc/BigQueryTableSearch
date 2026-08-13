@@ -157,21 +157,35 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
     if use_cache:
         drop_me = f'{loc_settings.BQ_METADATA_PROJ}.bqs_metadata.'
 
-        cache_query = old_query.replace(drop_me, "")
+        cache_query = query_statement.replace(drop_me, "")
         cache_query = cache_query.replace("ENDS_WITH(LOWER(R.tableId), '_current')",
                                           "LOWER(R.tableId) LIKE '%_current'")
+        cache_query = cache_query.replace("&", ":")
+
+        cache_parameters = None
+        if parameters and len(parameters):
+            cache_parameters = {}
+            for sqp in parameters:
+                val = None
+                if sqp.type_ == "STRING":
+                    val = sqp.value
+                elif sqp.type_ == "NUMERIC":
+                    try:
+                        val = int(sqp.value)
+                    except ValueError:
+                        val = float(sqp.value)
+                cache_parameters[sqp.name] = val
+
         logger.info("Cache Query")
         logger.info(cache_query)
-        if parameters and len(parameters):
+        if cache_parameters:
             logger.info("Parameters")
-            logger.info(parameters)
-        logger.info("Param Query")
-        logger.info(query_statement)
+            logger.info(cache_parameters)
 
         # Connect to the SAME named in-memory database with conn2
         conn = sqlite3.connect("file:bill_db?mode=memory&cache=shared", uri=True)
         cursor2 = conn.cursor()
-        rows = cursor2.execute(cache_query).fetchall()
+        rows = cursor2.execute(cache_query, cache_parameters).fetchall()
         retval = []
 
         # Output to the console screen
