@@ -85,9 +85,8 @@ def search_api():
         app.logger.error(f"[ERROR] {error_msg}")
     filtered_meta_data = []
     try:
-        query_statement, parameters, old_query = bq_builder.metadata_query(request)
-        filtered_meta_data = bq_proxy.query_for_result(settings, parameters, query_statement, old_query)
-        # filtered_meta_data = [json.loads(dict(row)['metadata']) for row in result]
+        query_statement, parameters = bq_builder.metadata_query(request)
+        filtered_meta_data = bq_proxy.query_for_result(parameters, query_statement)
 
     except Exception as e:
         status_code=400

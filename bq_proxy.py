@@ -1,5 +1,5 @@
 ###
-# Copyright 2025, ISB
+# Copyright 2025, 2026, ISB
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -149,19 +149,24 @@ def build_the_local_proxy():
   return
 
 # Do the query
-def query_for_result(loc_settings, parameters, query_statement, old_query):
+def query_for_result(parameters, query_statement):
    #
-   # Gotta change the table names to drop the project and dataset
+   # Gotta change the table names to drop the project and dataset. Also need to change parameterization symbol
+   # and modify the query to match Sqlite3 syntax:
    #
-    use_cache = True
-    if use_cache:
-        drop_me = f'{loc_settings.BQ_METADATA_PROJ}.bqs_metadata.'
+
+    if settings.USE_LOCAL_CACHE:
+        drop_me = f'{settings.BQ_METADATA_PROJ}.bqs_metadata.'
 
         cache_query = query_statement.replace(drop_me, "")
         cache_query = cache_query.replace("ENDS_WITH(LOWER(R.tableId), '_current')",
                                           "LOWER(R.tableId) LIKE '%_current'")
         cache_query = cache_query.replace("@", ":")
 
+        #
+        # Apparently we are only ever working with strings in BQS queries. But it is worth trying to
+        # make sure the numeric case can be handled:
+        #
         cache_parameters = None
         if parameters and len(parameters):
             cache_parameters = {}
@@ -201,7 +206,7 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
         #logger.info(f"Result is {count} rows")
         return retval
     else:
-        bigquery_client = bigquery.Client(project=loc_settings.BQ_METADATA_PROJ)
+        bigquery_client = bigquery.Client(project=settings.BQ_METADATA_PROJ)
 
         # Build Query Job Config
         job_config = QueryJobConfig(allow_large_results=True, use_query_cache=False, priority='INTERACTIVE')
@@ -213,7 +218,7 @@ def query_for_result(loc_settings, parameters, query_statement, old_query):
             job_config.use_legacy_sql = False
 
 
-        logger.info("Query")
+        logger.info("BQ Query")
         logger.info(query_statement)
         query_job = bigquery_client.query(query_statement, job_config=job_config)
         result = query_job.result(timeout=30)
