@@ -45,6 +45,7 @@ BQ_FILTER_FILE_NAME = 'bq_meta_filters.json'
 BQ_FILTER_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_FILTER_FILE_NAME
 BQ_METADATA_FILE_NAME = 'bq_meta_data.json'
 BQ_METADATA_FILE_PATH = BQ_ECOSYS_BUCKET + BQ_METADATA_FILE_NAME
+USE_LOCAL_CACHE = bool(getenv('USE_LOCAL_CACHE','False').lower() == 'true')
 
 #
 # We use the metadata server to get Bearer Tokens to access private buckets, except for local dev:
