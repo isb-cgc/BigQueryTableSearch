@@ -64,7 +64,7 @@ def build_where_clause(conditions):
 
 # return true if val is valid and false if invalid character is detected
 def is_valid(val):
-    invalid_match = re.match('[^a-zA-Z\d\s.\-|_:\'\"]', val.strip('\'\"'))
+    invalid_match = re.match(r'[^a-zA-Z\d\s.\-|_:\'\"]', val.strip('\'\"'))
     return not invalid_match
 
 
