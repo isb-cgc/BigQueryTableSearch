@@ -64,7 +64,8 @@ def build_where_clause(conditions):
 
 # return true if val is valid and false if invalid character is detected
 def is_valid(val):
-    invalid_match = re.match('[^a-zA-Z\d\s.\-|_:\'\"]', val.strip('\'\"'))
+    invalid_match = re.match(r'[^a-zA-Z\d\s.\-|_:\'\"]', val.strip('\'\"'))
+    #r'[^a-zA-Z\d\s.\-|_:\'\"]'
     return not invalid_match
 
 
@@ -152,7 +153,7 @@ def metadata_query(req):
         req_data = req.args.to_dict(flat=False)
     r_filters = ['description', 'friendlyName', 'projectId', 'datasetId', 'tableId', 'include_always_newest']
     l_filters = ['status', 'category', 'experimental_strategy', 'data_type', 'source', 'program', 'reference_genome',
-                 'labels']
+                 'labels', 'species']
     f_filters = ['field_name']
     parameters = []
     where_clause, params, where_clause_param = build_where_clause(get_conditions(req_data, r_filters))
