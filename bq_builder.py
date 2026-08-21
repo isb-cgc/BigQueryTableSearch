@@ -49,20 +49,36 @@ def build_where_clause(conditions, types=None):
                 i += 1
         else:
             j = 0
-            for val in vals:
-                param_name = f'{k}_param_{j}'
-                where_clause += f'{and_or_where} LOWER(R.{k}) '
-                if re.search(r'%', val):
-                    params.append(ScalarQueryParameter(param_name, param_type, f'%{val.lower()}%'))
-                    clauses.append(f'(LOWER(R.{k}) LIKE @{param_name})')
-                    where_clause += f'LIKE \'{val.lower()}\'\n'
+            param_name = f'{k}_param_{j}'
+            field_name = f'R.{k}'
+            if param_type == 'STRING':
+                field_name = f'LOWER(R.{k})'
+            if len(vals) == 1:
+                where_clause += f'{and_or_where} {field_name} '
+                if re.search(r'%', vals[0]):
+                    params.append(ScalarQueryParameter(param_name, param_type, f'%{vals[0].lower()}%'))
+                    clauses.append(f'({field_name} LIKE @{param_name})')
+                    where_clause += f'LIKE \'{vals[0].lower()}\'\n'
                 else:
-                    params.append(ScalarQueryParameter(param_name, param_type, val.lower()))
-                    clauses.append(f'(LOWER(R.{k}) = @{param_name})')
-                    where_clause += f'= \'{val.lower()}\'\n'
+                    params.append(ScalarQueryParameter(param_name, param_type, vals[0].lower()))
+                    clauses.append(f'({field_name} = @{param_name})')
+                    where_clause += f'= \'{vals[0].lower()}\'\n'
                 j += 1
-        i += 1
-
+                i += 1
+            else:
+                wildcard_vals = [x for x in vals if re.search(r'%', x)]
+                exact_vals = [x for x in vals if x not in wildcard_vals]
+                array_clauses = []
+                if len(wildcard_vals):
+                    for val in wildcard_vals:
+                        params.append(ScalarQueryParameter(param_name, param_type, val))
+                        array_clauses.append(f'({field_name} LIKE @{param_name})')
+                        j += 1
+                if len(exact_vals):
+                    array_clauses.append(f'{field_name} IN UNNEST(@{param_name}))')
+                    params.append(ArrayQueryParameter(param_name, param_type, exact_vals))
+                clauses.append(f'({") OR (".join(array_clauses)})')
+                i += 1
     return where_clause, params, " AND ".join(clauses)
 
 
