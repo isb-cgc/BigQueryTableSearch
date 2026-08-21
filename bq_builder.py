@@ -55,7 +55,7 @@ def build_where_clause(conditions, types=None):
                 field_name = f'LOWER(R.{k})'
             if len(vals) == 1:
                 where_clause += f'{and_or_where} {field_name} '
-                if re.search(r'%', vals[0]):
+                if re.search(r'%', str(vals[0])):
                     params.append(ScalarQueryParameter(param_name, param_type, f'%{vals[0].lower()}%'))
                     clauses.append(f'({field_name} LIKE @{param_name})')
                     where_clause += f'LIKE \'{vals[0].lower()}\'\n'
@@ -66,7 +66,7 @@ def build_where_clause(conditions, types=None):
                 j += 1
                 i += 1
             else:
-                wildcard_vals = [x for x in vals if re.search(r'%', x)]
+                wildcard_vals = [x for x in vals if re.search(r'%', str(x))]
                 exact_vals = [x for x in vals if x not in wildcard_vals]
                 array_clauses = []
                 if len(wildcard_vals):
@@ -113,17 +113,17 @@ def get_conditions_new(rq_data, filters, types=None):
         vals = rq_data.get(f, [])
         verified_vals = []
         if not isinstance(vals, list):
-            if re.search(r'\|', vals):
+            if re.search(r'\|', str(vals)):
                 vals = vals.split('|')
             else:
                 vals = [vals]
         for v in vals:
             if v and not is_valid(v):
                 raise ValueError
-            if f == 'projectId' or (re.search(r'[\"\']',v) and f not in ['description', 'friendlyName']):
+            if f == 'projectId' or (re.search(r'[\"\']',str(v)) and f not in ['description', 'friendlyName']):
                 v = v.strip('\'\"')
             else:
-                if re.search(r'[^0-9.,]', v) or (types and types.get(f, None) == 'STRING'):
+                if re.search(r'[^0-9.,]', str(v)) or (types and types.get(f, None) == 'STRING'):
                     v = f'%{v}%'
             verified_vals.append(v)
         conditions.append((f, verified_vals))
