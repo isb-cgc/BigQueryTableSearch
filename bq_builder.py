@@ -21,8 +21,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# with the conditions (list of field-val tuples), build an sql where clause
-def build_where_clause(conditions):
+# with the conditions (list of field-val tuples), build a BQ parameterized sql where clause
+# types: optionally force certain fields to specific BQ parameter types over auto-detection
+#
+def build_where_clause(conditions, types=None):
     where_clause = ''
     params = []
     clauses = []
@@ -32,32 +34,34 @@ def build_where_clause(conditions):
             and_or_where = 'AND'
         else:
             and_or_where = 'WHERE'
-        param_name = f'{k}_param_{i}'
-        param_type = (
+        vals = [vals] if not isinstance(vals, list) else vals
+        param_type = types.get(k, None) or (
             'STRING' if (
-                    type(vals) not in [int, float, complex] and re.compile(r'[^0-9\.,]',
+                    type(vals[0]) not in [int, float, complex] and re.compile(r'[^0-9.,]',
                                                                                  re.UNICODE | re.IGNORECASE).search(
-                vals)
+                vals[0])
             ) else 'NUMERIC'
         )
         if k == 'include_always_newest':
-            if vals == 'false':
+            if vals[0] == 'false':
                 clauses.append("(NOT ENDS_WITH(LOWER(R.tableId), '_current'))")
                 where_clause += f'{and_or_where} NOT ENDS_WITH(LOWER(R.tableId), \'_current\')\n'
                 i += 1
         else:
-            where_clause += f'{and_or_where} LOWER(R.{k}) '
-            if is_quoted(vals) and k not in ['description', 'friendlyName'] or k == 'projectId':
-                vals = vals.strip('\'\"')
-                params.append(ScalarQueryParameter(param_name, param_type, vals.lower()))
-                clauses.append(f'(LOWER(R.{k}) = @{param_name})')
-                where_clause += f'= \'{vals.lower()}\'\n'
-            else:
-                vals = vals.strip('\'\"')
-                params.append(ScalarQueryParameter(param_name, param_type, f'%{vals.lower()}%'))
-                clauses.append(f'(LOWER(R.{k}) LIKE @{param_name})')
-                where_clause += f'LIKE \'%{vals.lower()}%\'\n'
-            i += 1
+            j = 0
+            for val in vals:
+                param_name = f'{k}_param_{j}'
+                where_clause += f'{and_or_where} LOWER(R.{k}) '
+                if re.search(r'%', val):
+                    params.append(ScalarQueryParameter(param_name, param_type, f'%{val.lower()}%'))
+                    clauses.append(f'(LOWER(R.{k}) LIKE @{param_name})')
+                    where_clause += f'LIKE \'{val.lower()}\'\n'
+                else:
+                    params.append(ScalarQueryParameter(param_name, param_type, val.lower()))
+                    clauses.append(f'(LOWER(R.{k}) = @{param_name})')
+                    where_clause += f'= \'{val.lower()}\'\n'
+                j += 1
+        i += 1
 
     return where_clause, params, " AND ".join(clauses)
 
@@ -83,6 +87,30 @@ def get_conditions(rq_data, filters):
                 raise ValueError
         if len(v_list):
             conditions.append((f, '|'.join(v_list)))
+    return conditions
+
+
+# Return a list of tuples containing the filters specified
+def get_conditions_new(rq_data, filters, types=None):
+    conditions = []
+    for f in filters:
+        vals = rq_data.get(f, [])
+        verified_vals = []
+        if not isinstance(vals, list):
+            if re.search(r'\|', vals):
+                vals = vals.split('|')
+            else:
+                vals = [vals]
+        for v in vals:
+            if v and not is_valid(v):
+                raise ValueError
+            if f == 'projectId' or (re.search(r'[\"\']',v) and f not in ['description', 'friendlyName']):
+                v = v.strip('\'\"')
+            else:
+                if re.search(r'[^0-9.,]', v) or (types and types.get(f, None) == 'STRING'):
+                    v = f'%{v}%'
+            verified_vals.append(v)
+        conditions.append((f, verified_vals))
     return conditions
 
 
@@ -156,7 +184,8 @@ def metadata_query(req):
                  'labels', 'species']
     f_filters = ['field_name']
     parameters = []
-    where_clause, params, where_clause_param = build_where_clause(get_conditions(req_data, r_filters))
+    r_filter_types = {x: 'STRING' for x in r_filters}
+    where_clause, params, where_clause_param = build_where_clause(get_conditions_new(req_data, r_filters, r_filter_types), r_filter_types)
     parameters.extend(params)
     join_clause, params, join_clause_labels = build_join_clause(get_conditions(req_data, l_filters), 'BQS_LABELS')
     parameters.extend(params)
