@@ -28,6 +28,7 @@ def build_where_clause(conditions, types=None):
     where_clause = ''
     params = []
     clauses = []
+    types = types or {}
     i = 0
     for k, vals in conditions:
         if i:
