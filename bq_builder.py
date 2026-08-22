@@ -51,9 +51,7 @@ def build_where_clause(conditions, types=None):
         else:
             j = 0
             param_name = f'{k}_param_{j}'
-            field_name = f'R.{k}'
-            if param_type == 'STRING':
-                field_name = f'LOWER(R.{k})'
+            field_name = f'LOWER(R.{k})' if param_type == 'STRING' else f'R.{k}'
             if len(vals) == 1:
                 where_clause += f'{and_or_where} {field_name} '
                 if re.search(r'%', str(vals[0])):
