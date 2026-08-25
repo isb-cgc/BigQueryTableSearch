@@ -78,7 +78,7 @@ def build_where_clause(conditions, types=None):
                     params.append(ArrayQueryParameter(param_name, param_type, exact_vals))
                 clauses.append(f'({") OR (".join(array_clauses)})')
                 i += 1
-    return where_clause, params, " AND ".join(clauses)
+    return where_clause, params, (" AND ".join(clauses) if len(clauses) else None)
 
 
 # return true if val is valid and false if invalid character is detected
