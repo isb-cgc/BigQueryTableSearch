@@ -125,7 +125,7 @@ def get_conditions_new(rq_data, filters, types=None):
                 if re.search(r'[^0-9.,]', str(v)) or (types and types.get(f, None) == 'STRING'):
                     v = f'%{v}%'
             verified_vals.append(v)
-        conditions.append((f, verified_vals))
+        len(verified_vals) and conditions.append((f, verified_vals))
     return conditions
 
 
