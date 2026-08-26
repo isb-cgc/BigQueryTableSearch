@@ -31,6 +31,8 @@ def build_where_clause(conditions, types=None):
     types = types or {}
     i = 0
     for k, vals in conditions:
+        if not len(vals):
+            raise ValueError('Conditions must have at least one value')
         if i:
             and_or_where = 'AND'
         else:
