@@ -57,7 +57,7 @@ def build_where_clause(conditions, types=None):
             if len(vals) == 1:
                 where_clause += f'{and_or_where} {field_name} '
                 if re.search(r'%', str(vals[0])):
-                    params.append(ScalarQueryParameter(param_name, param_type, f'%{vals[0].lower()}%'))
+                    params.append(ScalarQueryParameter(param_name, param_type, f'{vals[0].lower()}'))
                     clauses.append(f'({field_name} LIKE @{param_name})')
                     where_clause += f'LIKE \'{vals[0].lower()}\'\n'
                 else:
@@ -85,7 +85,7 @@ def build_where_clause(conditions, types=None):
 
 # return true if val is valid and false if invalid character is detected
 def is_valid(val):
-    invalid_match = re.match(r'[^a-zA-Z\d\s.\-|_:\'\"]', val.strip('\'\"'))
+    invalid_match = re.match(r'[^a-zA-Z\d\s.\-|_:\'"\\/%]', val.strip('\'\"'))
     #r'[^a-zA-Z\d\s.\-|_:\'\"]'
     return not invalid_match
 
@@ -125,7 +125,10 @@ def get_conditions_new(rq_data, filters, types=None):
                 v = v.strip('\'\"')
             else:
                 if re.search(r'[^0-9.,]', str(v)) or (types and types.get(f, None) == 'STRING'):
-                    v = f'%{v}%'
+                    # Per https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/operators#like_operator we have to escape some characters
+                    ev = re.sub(r'([\\])', r'\\', v)
+                    ev = re.sub(r'([%_])',r'\\\1',ev)
+                    v = f'%{ev}%'
             verified_vals.append(v)
         len(verified_vals) and conditions.append((f, verified_vals))
     return conditions

@@ -214,9 +214,12 @@ settings.setup_app(app)
 # initialize Swagger
 swagger = Swagger(app, template=swagger_config.swagger_template,config=swagger_config.swagger_config)
 
-logger.info("Start to build local proxy")
-bq_proxy.build_the_local_proxy()
-logger.info("Finish building local proxy")
+if settings.USE_LOCAL_CACHE:
+    logger.info("[STATUS] Start to build local proxy")
+    bq_proxy.build_the_local_proxy()
+    logger.info("[STATUS] Finish building local proxy")
+else:
+    logger.info("[STATUS] Will not build local cache.")
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
