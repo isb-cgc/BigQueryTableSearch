@@ -46,7 +46,8 @@ def build_where_clause(conditions, types=None):
             ) else 'NUMERIC'
         )
         if k == 'include_always_newest':
-            if vals[0] == 'false':
+            print(vals)
+            if vals[0].lower() == 'false':
                 clauses.append("(NOT ENDS_WITH(LOWER(R.tableId), '_current'))")
                 where_clause += f'{and_or_where} NOT ENDS_WITH(LOWER(R.tableId), \'_current\')\n'
                 i += 1
@@ -121,13 +122,12 @@ def get_conditions_new(rq_data, filters, types=None):
         for v in vals:
             if v and not is_valid(v):
                 raise ValueError
-            if f == 'projectId' or (re.search(r'[\"\']',str(v)) and f not in ['description', 'friendlyName']):
+            if f in ['projectId', 'include_always_newest'] or (re.search(r'["\']',str(v)) and f not in ['description', 'friendlyName']):
                 v = v.strip('\'\"')
             else:
                 if re.search(r'[^0-9.,]', str(v)) or (types and types.get(f, None) == 'STRING'):
                     # Per https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/operators#like_operator we have to escape some characters
-                    ev = re.sub(r'([\\])', r'\\', v)
-                    ev = re.sub(r'([%_])',r'\\\1',ev)
+                    ev = re.sub(r'([%_])',r'\\\1',v)
                     v = f'%{ev}%'
             verified_vals.append(v)
         len(verified_vals) and conditions.append((f, verified_vals))
