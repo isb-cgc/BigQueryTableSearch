@@ -167,8 +167,10 @@ def build_join_clause(conditions, table_name):
             if k in ['field_name', 'labels']:
                 field = 'name' if k == 'field_name' else 'labelValue'
                 sub_clauses.append(f'(LOWER({k}.{field}) LIKE @{param_name})')
-                join_clause += f'(LOWER({k}.{field}) LIKE \'%{val.lower()}%\')\n'
-                params.append(ScalarQueryParameter(param_name, param_type, f'%{val.lower()}%'))
+                join_clause += f'(LOWER({k}.{field}) LIKE \'{val.lower()}\')\n'
+                # Per https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/operators#like_operator we have to escape some characters
+                ev = re.sub(r'([%_])', r'\\\1', val)
+                params.append(ScalarQueryParameter(param_name, param_type, f'%{ev.lower()}%'))
             else:
                 labelKey_param_name = f'lk_{k}_param_{i}'
                 params.append(ScalarQueryParameter(labelKey_param_name, 'STRING', f'{k}'))
@@ -209,7 +211,7 @@ def metadata_query(req):
     parameters.extend(params)
     join_clause, params, join_clause_labels = build_join_clause(get_conditions(req_data, l_filters), 'BQS_LABELS')
     parameters.extend(params)
-    join_clause_f, params, join_clause_schema = build_join_clause(get_conditions(req_data, f_filters), 'BQS_SCHEMA_FIELDS')
+    join_clause_f, params, join_clause_schema = build_join_clause(get_conditions_new(req_data, f_filters), 'BQS_SCHEMA_FIELDS')
     parameters.extend(params)
     join_clause += join_clause_f
 
