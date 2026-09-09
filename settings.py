@@ -10,6 +10,7 @@ from requests.exceptions import ConnectionError
 
 IS_APP_ENGINE = getenv("IS_APP_ENGINE", "false").lower() == "true"
 TIER = getenv('TIER', 'dev')
+IS_LOCAL = getenv('IS_LOCAL', 'false').lower() == "true"
 
 if IS_APP_ENGINE:
     import google.cloud.logging
