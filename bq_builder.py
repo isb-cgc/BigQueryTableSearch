@@ -46,7 +46,6 @@ def build_where_clause(conditions, types=None):
             ) else 'NUMERIC'
         )
         if k == 'include_always_newest':
-            print(vals)
             if vals[0].lower() == 'false':
                 clauses.append("(NOT ENDS_WITH(LOWER(R.tableId), '_current'))")
                 where_clause += f'{and_or_where} NOT ENDS_WITH(LOWER(R.tableId), \'_current\')\n'
@@ -85,9 +84,12 @@ def build_where_clause(conditions, types=None):
 
 
 # return true if val is valid and false if invalid character is detected
-def is_valid(val):
-    invalid_match = re.match(r'[^a-zA-Z\d\s.\-|_:\'"\\/%]', val.strip('\'\"'))
-    #r'[^a-zA-Z\d\s.\-|_:\'\"]'
+def is_valid(val, filter=None):
+    # Field names are more restrictive than other filters
+    if filter and filter in ['field_name', 'datasetId', 'tableId', 'labels']:
+        invalid_match = re.match(r'[^a-zA-Z\d_]', val.strip('\'\"'))
+    else:
+        invalid_match = re.match(r'[^a-zA-Z\d\s.\-|_:\'"/%]', val.strip('\'\"'))
     return not invalid_match
 
 
@@ -101,7 +103,7 @@ def get_conditions(rq_data, filters):
         else:
             v_list = val.split('|')
         for v in v_list:
-            if v and not is_valid(v):
+            if v and not is_valid(v, f):
                 raise ValueError
         if len(v_list):
             conditions.append((f, '|'.join(v_list)))
@@ -120,7 +122,7 @@ def get_conditions_new(rq_data, filters, types=None):
             else:
                 vals = [vals]
         for v in vals:
-            if v and not is_valid(v):
+            if v and not is_valid(v, f):
                 raise ValueError
             if f in ['projectId', 'include_always_newest'] or (re.search(r'["\']',str(v)) and f not in ['description', 'friendlyName']):
                 v = v.strip('\'\"')
@@ -153,12 +155,13 @@ def build_join_clause(conditions, table_name):
         join_clause += 'AND ( \n'
         i = 0
         sub_clauses = []
-        for val in vals.split('|'):
+        vals = vals.split('|') if not isinstance(vals, list) else vals
+        for val in vals:
             param_type = (
                 'STRING' if (
-                        type(vals) not in [int, float, complex] and re.compile(r'[^0-9\.,]',
+                        type(val) not in [int, float, complex] and re.compile(r'[^0-9\.,]',
                                                                                re.UNICODE | re.IGNORECASE).search(
-                    vals)
+                    val)
                 ) else 'NUMERIC'
             )
             param_name = f'{k}_param_{i}'
