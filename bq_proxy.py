@@ -202,6 +202,7 @@ def query_for_result(parameters, query_statement):
                         ev = re.sub(r'\\%', r'\%', sqp.value)
                         val = re.sub(r'\\_', r'\_', ev)
                         if val != sqp.value:
+                            print("repair", sqp.name)
                             append_params.add(sqp.name)
                 elif sqp.type_ == "NUMERIC":
                     try:
