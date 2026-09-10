@@ -20,6 +20,7 @@ import io
 import sys
 import settings
 import json
+import re
 from google.cloud import bigquery
 from google.cloud.bigquery import QueryJobConfig
 import logging
@@ -154,11 +155,21 @@ def query_for_result(parameters, query_statement):
    # Gotta change the table names to drop the project and dataset. Also need to change parameterization symbol
    # and modify the query to match Sqlite3 syntax:
    #
+   # This is what shows up in the logs when "%" is the query string:
+   #
+   #[ScalarQueryParameter('description_param_0', 'STRING', '%\\%%')
+   # And this is for the _:
+   # [ScalarQueryParameter('description_param_0', 'STRING', '%\\_%'),
+   #
 
     if settings.USE_LOCAL_CACHE:
+        #
+        # Get the table names to match the simple structure in the cache:
+        #
         drop_me = f'{settings.BQ_METADATA_PROJ}.bqs_metadata.'
 
         cache_query = query_statement.replace(drop_me, "")
+        # ENDS_WITH does not exist in
         cache_query = cache_query.replace("ENDS_WITH(LOWER(R.tableId), '_current')",
                                           "LOWER(R.tableId) LIKE '%_current'")
         cache_query = cache_query.replace("@", ":")
@@ -168,18 +179,41 @@ def query_for_result(parameters, query_statement):
         # make sure the numeric case can be handled:
         #
         cache_parameters = None
+        append_params = None
         if parameters and len(parameters):
             cache_parameters = {}
+            append_parameters = set()
             for sqp in parameters:
                 val = None
                 if sqp.type_ == "STRING":
-                    val = sqp.value
+                    # WHERE (LOWER(R.description) LIKE @description_param_0) AND (LOWER(R.friendlyName) LIKE @friendlyName_param_0)
+                    # NOTE SQLITE SYNTAX ATTACHES THE ESCAPE clause right after every LIKE {expr}!
+                    # If this contains a wildcard escape, we need to munge the value to get to one backslash, and
+                    # we need to append the ESCAPE clause:
+                    # WHERE(LOWER(R.description) LIKE @ description_param_0) ->
+                    #   WHERE(LOWER(R.description) LIKE @ description_param_0) ESCAPE "\"
+                    # Note that we will only be looking in 'description' or 'friendlyName' for escaped wildcards:
+                    if not (('description_param' in sqp.name) or ('friendlyName_param' in sqp.name)):
+                        val = sqp.value
+                    else:
+                        # OK, we might have a wildcard somewhere in there. If we do, we knock the \\ down by one \
+                        # and need to add the ESCAPE clause after the LIKE {expr}. Remember, these parameters will
+                        # be bounded by "%" at the start and end, always.
+                        ev = re.sub(r'\\%', r'\%', sqp.value)
+                        val = re.sub(r'\\_', r'\_', ev)
+                        if val != sqp.value:
+                            append_params.add(sqp.name)
                 elif sqp.type_ == "NUMERIC":
                     try:
                         val = int(sqp.value)
                     except ValueError:
                         val = float(sqp.value)
                 cache_parameters[sqp.name] = val
+
+        # Now, if we need to add escape clauses, this is where we do it:
+            if append_parameters is not None:
+                for mod in append_params:
+                    cache_query = cache_query.replace(f'LIKE :{mod}', f'LIKE :{mod} ESCAPE "\\"')
 
         logger.info("Cache Query")
         logger.info(cache_query)
