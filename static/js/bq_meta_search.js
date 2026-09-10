@@ -21,12 +21,20 @@ $(document).ready(function () {
     const doneTypingInterval = 500; // Time in ms (0.5 seconds)
 
     let query_param_url = set_filters();
-    let table = $('#bqmeta').DataTable({
+    var table = $('#bqmeta').DataTable({
         dom: 'lfBrtip',
         ajax: {
             method: 'GET',
             url: '/search_api' + query_param_url,
             dataSrc: '',
+            error: function(xhr, error, code) {
+                if(xhr.status == 400) {
+                    alert(xhr.responseJSON.message);
+                    $('#bqmeta_processing').hide();
+                    $('.dataTables_empty').html("Could not load table.");
+                }
+                console.error(xhr, code);
+            }
         },
         buttons: [
             {
@@ -396,6 +404,7 @@ $(document).ready(function () {
         let filter_str = filter_arr.join('&');
         let updated_url = "/search_api" + (filter_str ? '?' + filter_str : '');
         table.ajax.url(updated_url).load();
+        $('.dataTables_empty').html("Loading...");
         window.history.pushState(null, 'BigQuery Table Search', filter_str ? ('?' + filter_str) : '/search');
         // window.history.pushState(null, 'BigQuery Table Search', filter_str ? ('?' + filter_str) : '');
     };
