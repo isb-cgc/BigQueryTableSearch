@@ -183,10 +183,10 @@ def query_for_result(parameters, query_statement):
         if parameters and len(parameters):
             cache_parameters = {}
             append_params = set()
-            print("per params!", len(parameters))
+            logger.info(f"per params! {len(parameters)}")
             for sqp in parameters:
                 val = None
-                print("checkit", sqp.name, sqp.value)
+                logger.info(f"checkit {sqp.name}, {sqp.value}")
                 if sqp.type_ == "STRING":
                     # WHERE (LOWER(R.description) LIKE @description_param_0) AND (LOWER(R.friendlyName) LIKE @friendlyName_param_0)
                     # NOTE SQLITE SYNTAX ATTACHES THE ESCAPE clause right after every LIKE {expr}!
@@ -196,17 +196,17 @@ def query_for_result(parameters, query_statement):
                     #   WHERE(LOWER(R.description) LIKE @ description_param_0) ESCAPE "\"
                     # Note that we will only be looking in 'description' or 'friendlyName' for escaped wildcards:
                     if not (('description_param' in sqp.name) or ('friendlyName_param' in sqp.name)):
-                        print("no repair!", sqp.name, sqp.value)
+                        logger.info(f"no repair! {sqp.name}, {sqp.value}")
                         val = sqp.value
                     else:
-                        print("maybe repair?", sqp.name)
+                        logger.info("maybe repair?", sqp.name)
                         # OK, we might have a wildcard somewhere in there. If we do, we knock the \\ down by one \
                         # and need to add the ESCAPE clause after the LIKE {expr}. Remember, these parameters will
                         # be bounded by "%" at the start and end, always.
                         ev = re.sub(r'\\%', r'\%', sqp.value)
                         val = re.sub(r'\\_', r'\_', ev)
                         if val != sqp.value:
-                            print("repair", sqp.name)
+                            logger.info(f"repair {sqp.name}")
                             append_params.add(sqp.name)
                 elif sqp.type_ == "NUMERIC":
                     try:
@@ -220,7 +220,7 @@ def query_for_result(parameters, query_statement):
                 for mod in append_params:
                     replace_string = f'LIKE :{mod}'
                     replacement_string = f'LIKE :{mod} ESCAPE "\\"'
-                    print(replace_string, replacement_string)
+                    logger.info(f"{replace_string} to {replacement_string}")
                     cache_query = cache_query.replace(replace_string, replacement_string)
 
         logger.info("Cache Query")
