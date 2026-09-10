@@ -182,7 +182,7 @@ def query_for_result(parameters, query_statement):
         append_params = None
         if parameters and len(parameters):
             cache_parameters = {}
-            append_parameters = set()
+            append_params = set()
             for sqp in parameters:
                 val = None
                 if sqp.type_ == "STRING":
@@ -211,7 +211,7 @@ def query_for_result(parameters, query_statement):
                 cache_parameters[sqp.name] = val
 
         # Now, if we need to add escape clauses, this is where we do it:
-            if append_parameters is not None:
+            if append_params is not None:
                 for mod in append_params:
                     cache_query = cache_query.replace(f'LIKE :{mod}', f'LIKE :{mod} ESCAPE "\\"')
 
