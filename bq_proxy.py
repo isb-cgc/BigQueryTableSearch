@@ -213,7 +213,10 @@ def query_for_result(parameters, query_statement):
         # Now, if we need to add escape clauses, this is where we do it:
             if append_params is not None:
                 for mod in append_params:
-                    cache_query = cache_query.replace(f'LIKE :{mod}', f'LIKE :{mod} ESCAPE "\\"')
+                    replace_string = f'LIKE :{mod}'
+                    replacement_string = f'LIKE :{mod} ESCAPE "\\"'
+                    print(replace_string, replacement_string)
+                    cache_query = cache_query.replace(replace_string, replacement_string)
 
         logger.info("Cache Query")
         logger.info(cache_query)
