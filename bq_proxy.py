@@ -183,8 +183,10 @@ def query_for_result(parameters, query_statement):
         if parameters and len(parameters):
             cache_parameters = {}
             append_params = set()
+            print("per params!", len(parameters))
             for sqp in parameters:
                 val = None
+                print("checkit", sqp.name, sqp.value)
                 if sqp.type_ == "STRING":
                     # WHERE (LOWER(R.description) LIKE @description_param_0) AND (LOWER(R.friendlyName) LIKE @friendlyName_param_0)
                     # NOTE SQLITE SYNTAX ATTACHES THE ESCAPE clause right after every LIKE {expr}!
