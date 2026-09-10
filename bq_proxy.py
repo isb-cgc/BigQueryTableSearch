@@ -194,8 +194,10 @@ def query_for_result(parameters, query_statement):
                     #   WHERE(LOWER(R.description) LIKE @ description_param_0) ESCAPE "\"
                     # Note that we will only be looking in 'description' or 'friendlyName' for escaped wildcards:
                     if not (('description_param' in sqp.name) or ('friendlyName_param' in sqp.name)):
+                        print("no repair!", sqp.name, sqp.value)
                         val = sqp.value
                     else:
+                        print("maybe repair?", sqp.name)
                         # OK, we might have a wildcard somewhere in there. If we do, we knock the \\ down by one \
                         # and need to add the ESCAPE clause after the LIKE {expr}. Remember, these parameters will
                         # be bounded by "%" at the start and end, always.
