@@ -199,7 +199,7 @@ def query_for_result(parameters, query_statement):
                         logger.info(f"no repair! {sqp.name}, {sqp.value}")
                         val = sqp.value
                     else:
-                        logger.info("maybe repair?", sqp.name)
+                        logger.info(f"maybe repair? {sqp.name}")
                         # OK, we might have a wildcard somewhere in there. If we do, we knock the \\ down by one \
                         # and need to add the ESCAPE clause after the LIKE {expr}. Remember, these parameters will
                         # be bounded by "%" at the start and end, always.
