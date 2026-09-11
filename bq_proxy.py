@@ -160,7 +160,11 @@ def query_for_result(parameters, query_statement):
    #[ScalarQueryParameter('description_param_0', 'STRING', '%\\%%')
    # And this is for the _:
    # [ScalarQueryParameter('description_param_0', 'STRING', '%\\_%'),
-   #
+   # BUT! I see this:
+   # no repair! datasetId_param_0, %\_%
+   # for this log statement:
+   # logger.info(f"no repair! {sqp.name}, {sqp.value}")
+   # So the double backslash is not really there?
 
     if settings.USE_LOCAL_CACHE:
         #
@@ -188,28 +192,31 @@ def query_for_result(parameters, query_statement):
                 val = None
                 logger.info(f"checkit {sqp.name}, {sqp.value}")
                 if sqp.type_ == "STRING":
-                    # WHERE (LOWER(R.description) LIKE @description_param_0) AND (LOWER(R.friendlyName) LIKE @friendlyName_param_0)
                     # NOTE SQLITE SYNTAX ATTACHES THE ESCAPE clause right after every LIKE {expr}!
-                    # If this contains a wildcard escape, we need to munge the value to get to one backslash, and
-                    # we need to append the ESCAPE clause:
-                    # WHERE(LOWER(R.description) LIKE @ description_param_0) ->
-                    #   WHERE(LOWER(R.description) LIKE @ description_param_0) ESCAPE "\"
-                    # Note that we will only be looking in 'description' or 'friendlyName' for escaped wildcards:
-                    if not (('description_param' in sqp.name) or ('friendlyName_param' in sqp.name)):
+                    # If this contains a wildcard escape, we need to append the ESCAPE clause:
+                    # WHERE(LOWER(R.description) LIKE :description_param_0) ->
+                    #   WHERE(LOWER(R.description) LIKE :description_param_0) ESCAPE "\"
+                    if not (('description_param' in sqp.name) or
+                            ('friendlyName_param' in sqp.name) or
+                            ('datasetId_param' in sqp.name) or
+                            ('tableId_param' in sqp.name) or
+                            ('labels_param' in sqp.name) or
+                            ('field_name_param' in sqp.name)):
                         logger.info(f"no repair! {sqp.name}, {sqp.value}")
                         val = sqp.value
                     else:
                         logger.info(f"maybe repair? {sqp.name}, {sqp.value}, {len(sqp.value)}")
-                        # OK, we might have a wildcard somewhere in there. If we do, we knock the \\ down by one \
-                        # and need to add the ESCAPE clause after the LIKE {expr}. Remember, these parameters will
-                        # be bounded by "%" at the start and end, always.
+                        # I am only seeing single \ in the logs, not two. So this step should not be needed? But
+                        # just in case...
+                        # Remember, these parameters will be bounded by "%" at the start and end, always.
                         ev = re.sub(r'\\%', r'\%', sqp.value)
                         val = re.sub(r'\\_', r'\_', ev)
                         if val != sqp.value:
-                            logger.info(f"repair {sqp.name}, {sqp.value}, {len(sqp.value)}")
+                            logger.info(f"repaired! {sqp.name}, {sqp.value}, {len(sqp.value)}")
                         else:
                             logger.info(f"unchanged {sqp.name}, {sqp.value}, {len(sqp.value)}")
-                        append_params.add(sqp.name)
+                        if r'\%' in sqp.value or r'\_' in sqp.value:
+                            append_params.add(sqp.name) # gotta fix these LIKES to add ESCAPE
                 elif sqp.type_ == "NUMERIC":
                     try:
                         val = int(sqp.value)
