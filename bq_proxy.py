@@ -150,7 +150,7 @@ def build_the_local_proxy():
   return
 
 # Do the query
-def query_for_result(parameters, query_statement):
+def query_for_result(parameters, query_statement, force_bq=False):
    #
    # Gotta change the table names to drop the project and dataset. Also need to change parameterization symbol
    # and modify the query to match Sqlite3 syntax:
@@ -166,7 +166,7 @@ def query_for_result(parameters, query_statement):
    # logger.info(f"no repair! {sqp.name}, {sqp.value}")
    # So the double backslash is not really there?
 
-    if settings.USE_LOCAL_CACHE:
+    if settings.USE_LOCAL_CACHE and not force_bq:
         #
         # Get the table names to match the simple structure in the cache:
         #
