@@ -197,6 +197,7 @@ def build_join_clause(conditions, table_name):
 # return an SQL query statement with the given search criteria in req
 def metadata_query(req):
     req_data = None
+    force_bq = False
     if req.method == 'POST':
         if req.form:
             req_data = req.form.to_dict(flat=False)
@@ -204,6 +205,9 @@ def metadata_query(req):
             req_data = req.get_json()
     else:
         req_data = req.args.to_dict(flat=False)
+    if req_data.get('force_bq'):
+        force_bq = bool(req_data.get('force_bq',['false'])[0].lower() == 'true')
+        del req_data['force_bq']
     r_filters = ['description', 'friendlyName', 'projectId', 'datasetId', 'tableId', 'include_always_newest']
     l_filters = ['status', 'category', 'experimental_strategy', 'data_type', 'source', 'program', 'reference_genome',
                  'labels', 'species']
@@ -241,7 +245,7 @@ def metadata_query(req):
     logger.info("PARAMETERIZED VERSION: {}".format(query_str))
 
 
-    return query_str, parameters
+    return query_str, parameters, force_bq
 
 
 # returns true if the field_val is wrapped with single quotes or double quotes
