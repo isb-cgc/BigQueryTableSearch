@@ -206,7 +206,7 @@ def metadata_query(req):
     else:
         req_data = req.args.to_dict(flat=False)
     if req_data.get('force_bq'):
-        force_bq = bool(req_data.get('force_bq',['false'])[0].lower() == 'true')
+#        force_bq = bool(req_data.get('force_bq',['false'])[0].lower() == 'true')
         del req_data['force_bq']
     r_filters = ['description', 'friendlyName', 'projectId', 'datasetId', 'tableId', 'include_always_newest']
     l_filters = ['status', 'category', 'experimental_strategy', 'data_type', 'source', 'program', 'reference_genome',
