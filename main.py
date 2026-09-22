@@ -85,8 +85,8 @@ def search_api():
         app.logger.error(f"[ERROR] {error_msg}")
     filtered_meta_data = []
     try:
-        query_statement, parameters = bq_builder.metadata_query(request)
-        filtered_meta_data = bq_proxy.query_for_result(parameters, query_statement)
+        query_statement, parameters, force_bq = bq_builder.metadata_query(request)
+        filtered_meta_data = bq_proxy.query_for_result(parameters, query_statement, force_bq)
 
     except Exception as e:
         status_code=400
@@ -214,9 +214,12 @@ settings.setup_app(app)
 # initialize Swagger
 swagger = Swagger(app, template=swagger_config.swagger_template,config=swagger_config.swagger_config)
 
-logger.info("Start to build local proxy")
-bq_proxy.build_the_local_proxy()
-logger.info("Finish building local proxy")
+if settings.USE_LOCAL_CACHE:
+    logger.info("[STATUS] Start to build local proxy")
+    bq_proxy.build_the_local_proxy()
+    logger.info("[STATUS] Finish building local proxy")
+else:
+    logger.info("[STATUS] Will not build local cache.")
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)

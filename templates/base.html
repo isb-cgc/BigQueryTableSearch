@@ -42,6 +42,18 @@
     <script type="text/javascript" src="{{ url_for('static', filename='js/libs/chosen.jquery.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/base.js') }}"></script>
 
+    {% if SITE_GOOGLE_ANALYTICS_TRACKING_ID  %}
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ SITE_GOOGLE_ANALYTICS_TRACKING_ID }}">
+        </script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', '{{ SITE_GOOGLE_ANALYTICS_TRACKING_ID }}');
+        </script>
+    {%  endif %}
 
     {% endblock %}
 </head>

@@ -20,6 +20,7 @@ import io
 import sys
 import settings
 import json
+import re
 from google.cloud import bigquery
 from google.cloud.bigquery import QueryJobConfig
 import logging
@@ -149,16 +150,30 @@ def build_the_local_proxy():
   return
 
 # Do the query
-def query_for_result(parameters, query_statement):
+def query_for_result(parameters, query_statement, force_bq=False):
    #
    # Gotta change the table names to drop the project and dataset. Also need to change parameterization symbol
    # and modify the query to match Sqlite3 syntax:
    #
+   # This is what shows up in the logs when "%" is the query string:
+   #
+   #[ScalarQueryParameter('description_param_0', 'STRING', '%\\%%')
+   # And this is for the _:
+   # [ScalarQueryParameter('description_param_0', 'STRING', '%\\_%'),
+   # BUT! I see this:
+   # no repair! datasetId_param_0, %\_%
+   # for this log statement:
+   # logger.info(f"no repair! {sqp.name}, {sqp.value}")
+   # So the double backslash is not really there?
 
-    if settings.USE_LOCAL_CACHE:
+    if settings.USE_LOCAL_CACHE and not force_bq:
+        #
+        # Get the table names to match the simple structure in the cache:
+        #
         drop_me = f'{settings.BQ_METADATA_PROJ}.bqs_metadata.'
 
         cache_query = query_statement.replace(drop_me, "")
+        # ENDS_WITH does not exist in
         cache_query = cache_query.replace("ENDS_WITH(LOWER(R.tableId), '_current')",
                                           "LOWER(R.tableId) LIKE '%_current'")
         cache_query = cache_query.replace("@", ":")
@@ -168,18 +183,54 @@ def query_for_result(parameters, query_statement):
         # make sure the numeric case can be handled:
         #
         cache_parameters = None
+        append_params = None
         if parameters and len(parameters):
             cache_parameters = {}
+            append_params = set()
+            logger.info(f"per params! {len(parameters)}")
             for sqp in parameters:
                 val = None
+                logger.info(f"checkit {sqp.name}, {sqp.value}")
                 if sqp.type_ == "STRING":
-                    val = sqp.value
+                    # NOTE SQLITE SYNTAX ATTACHES THE ESCAPE clause right after every LIKE {expr}!
+                    # If this contains a wildcard escape, we need to append the ESCAPE clause:
+                    # WHERE(LOWER(R.description) LIKE :description_param_0) ->
+                    #   WHERE(LOWER(R.description) LIKE :description_param_0) ESCAPE "\"
+                    if not (('description_param' in sqp.name) or
+                            ('friendlyName_param' in sqp.name) or
+                            ('datasetId_param' in sqp.name) or
+                            ('tableId_param' in sqp.name) or
+                            ('labels_param' in sqp.name) or
+                            ('field_name_param' in sqp.name)):
+                        logger.info(f"no repair! {sqp.name}, {sqp.value}")
+                        val = sqp.value
+                    else:
+                        logger.info(f"maybe repair? {sqp.name}, {sqp.value}, {len(sqp.value)}")
+                        # I am only seeing single \ in the logs, not two. So this step should not be needed? But
+                        # just in case...
+                        # Remember, these parameters will be bounded by "%" at the start and end, always.
+                        ev = re.sub(r'\\%', r'\%', sqp.value)
+                        val = re.sub(r'\\_', r'\_', ev)
+                        if val != sqp.value:
+                            logger.info(f"repaired! {sqp.name}, {sqp.value}, {len(sqp.value)}")
+                        else:
+                            logger.info(f"unchanged {sqp.name}, {sqp.value}, {len(sqp.value)}")
+                        if r'\%' in sqp.value or r'\_' in sqp.value:
+                            append_params.add(sqp.name) # gotta fix these LIKES to add ESCAPE
                 elif sqp.type_ == "NUMERIC":
                     try:
                         val = int(sqp.value)
                     except ValueError:
                         val = float(sqp.value)
                 cache_parameters[sqp.name] = val
+
+        # Now, if we need to add escape clauses, this is where we do it:
+            if append_params is not None:
+                for mod in append_params:
+                    replace_string = f'LIKE :{mod}'
+                    replacement_string = f'LIKE :{mod} ESCAPE "\\"'
+                    logger.info(f"{replace_string} to {replacement_string}")
+                    cache_query = cache_query.replace(replace_string, replacement_string)
 
         logger.info("Cache Query")
         logger.info(cache_query)
