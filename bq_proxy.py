@@ -241,7 +241,13 @@ def query_for_result(parameters, query_statement, force_bq=False):
         # Connect to the SAME named in-memory database with conn2
         conn = sqlite3.connect("file:bill_db?mode=memory&cache=shared", uri=True)
         cursor2 = conn.cursor()
-        rows = cursor2.execute(cache_query, cache_parameters).fetchall()
+        #
+        # Seems that sqlite barfs if it is fed a cache_parameters argument that is None:
+        # "sqlite3.ProgrammingError: parameters are of unsupported type"
+        if cache_parameters is not None:
+            rows = cursor2.execute(cache_query, cache_parameters).fetchall()
+        else:
+            rows = cursor2.execute(cache_query).fetchall()
         retval = []
 
         # Output to the console screen
